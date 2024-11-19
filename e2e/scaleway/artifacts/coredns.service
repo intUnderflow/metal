@@ -1,0 +1,13 @@
+[Unit]
+Description=CoreDNS service
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /root/coredns.sh
+Restart=always
+RestartSec=10s
+TimeoutStartSec=120
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

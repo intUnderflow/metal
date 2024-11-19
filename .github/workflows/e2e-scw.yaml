@@ -1,0 +1,415 @@
+on:
+  workflow_dispatch:
+    inputs:
+      SCW_PROJECT_ID:
+        description: "Scaleway project ID"
+        required: true
+        default: "bdc6ca27-5a56-4555-9c4f-64d3ea7faeb2"
+      SCW_ZONE:
+        description: "Scaleway zone"
+        required: true
+        default: "nl-ams-1"
+      BROKER_IMAGE_NAME:
+        description: "Broker image name"
+        required: true
+        default: "ghcr.io/intunderflow/broker-linux-amd64"
+      DOMAIN_NAME:
+        description: "Domain name to use for DNS"
+        required: true
+        default: "metale2etesting.eu"
+
+concurrency:
+  group: e2e-scw
+  cancel-in-progress: false
+
+jobs:
+  cleanup-start:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install SCW CLI
+        run: |
+          curl -s https://raw.githubusercontent.com/scaleway/scaleway-cli/master/scripts/get.sh | sh
+      - name: Login to Scaleway
+        run: |
+          scw init organization-id=$SCW_ORG_ID access-key=$SCW_ACCESS_KEY secret-key=$SCW_SECRET_KEY project-id=$SCW_PROJECT_ID send-telemetry=false
+        env:
+          SCW_ORG_ID: ${{ secrets.SCW_ORG_ID }}
+          SCW_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
+          SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+          SCW_PROJECT_ID: ${{ github.event.inputs.SCW_PROJECT_ID }}
+      - name: Delete servers
+        run: |
+          OUTPUT=$(scw instance server list project-id=$SCW_PROJECT_ID zone=$SCW_ZONE -o json)
+          echo $OUTPUT
+          SERVER_IDS=$(echo $OUTPUT | jq -r '.[].id')
+          echo $SERVER_IDS
+          poweroff_server() {
+            local id=$1
+            echo "Powering off server $id"
+            scw instance server stop $id zone=$SCW_ZONE --wait || true
+          }
+          for SERVER_ID in $SERVER_IDS; do
+            poweroff_server $SERVER_ID &
+          done
+          wait
+          for SERVER_ID in $SERVER_IDS; do
+            echo "Deleting server $SERVER_ID"
+            scw instance server delete "$SERVER_ID" with-volumes=all with-ip=true zone=$SCW_ZONE --wait
+          done
+        env:
+          SCW_PROJECT_ID: ${{ github.event.inputs.SCW_PROJECT_ID }}
+          SCW_ZONE: ${{ github.event.inputs.SCW_ZONE }}
+      - name: Delete IPs
+        run: |
+          IP_IDS=$(scw instance ip list project-id=$SCW_PROJECT_ID zone=$SCW_ZONE -o json | jq -r '.[].id')
+          for IP_ID in $IP_IDS; do
+            echo "Deleting IP with ID: $IP_ID"
+            scw instance ip delete "$IP_ID" zone=$SCW_ZONE
+          done
+        env:
+          SCW_PROJECT_ID: ${{ github.event.inputs.SCW_PROJECT_ID }}
+          SCW_ZONE: ${{ github.event.inputs.SCW_ZONE }}
+      - name: Delete SSH keys
+        run: |
+          SSH_KEY_IDS=$(scw iam ssh-key list project-id="$SCW_PROJECT_ID" -o json | jq ".[].id")
+          for SSH_KEY_ID in $SSH_KEY_IDS; do
+           echo "Deleting SSH key with ID: $SSH_KEY_ID"
+           scw iam ssh-key delete ${SSH_KEY_ID//\"/}
+          done
+        env:
+          SCW_PROJECT_ID: ${{ github.event.inputs.SCW_PROJECT_ID }}
+      - name: Delete DNS records
+        run: |
+          scw dns record clear ${{ github.event.inputs.DOMAIN_NAME }}
+  e2e:
+    needs: cleanup-start
+    runs-on: ubuntu-latest
+    environment: e2e
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download Kubernetes
+        run: |
+          wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-apiserver -O kube-apiserver
+          wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-controller-manager -O kube-controller-manager
+          wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-scheduler -O kube-scheduler
+          wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kubectl -O kubectl
+          wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kubelet -O kubelet
+          wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-proxy -O kube-proxy
+      - name: Download CoreDNS
+        run: |
+          wget -q https://github.com/coredns/coredns/releases/download/v1.11.4/coredns_1.11.4_linux_amd64.tgz -O coredns.tgz
+          mkdir ./corednsdir
+          tar Cxzvf ./corednsdir ./coredns.tgz
+          mv ./corednsdir/coredns ./coredns
+      - name: Build software
+        run: |
+          cd ${GITHUB_WORKSPACE}/agent/go && GOOS=linux GOARCH=amd64 go build -o /tmp/metal-agent main.go
+          cd ${GITHUB_WORKSPACE}/metalctl && go build -o /tmp/metalctl main.go
+      - name: Create X509 Certificates
+        run : |
+          openssl genpkey -algorithm RSA -out root-ca.key -pkeyopt rsa_keygen_bits:4096
+          openssl req -x509 -new -nodes -key root-ca.key -sha256 -days 3650 -out root-ca.pem -subj "/C=DK/CN=metal.local"
+          openssl x509 -in root-ca.pem -text -noout
+          openssl genpkey -algorithm RSA -out admin.key -pkeyopt rsa_keygen_bits:4096
+          openssl req -new -key admin.key -out admin.csr -subj "/C=DK/CN=e2e.admin.metal.local"
+          openssl x509 -req -in admin.csr -CA root-ca.pem -CAkey root-ca.key -CAcreateserial -out admin.pem -days 365 -sha256 -extfile <(printf "basicConstraints=CA:FALSE\nkeyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment")
+          openssl x509 -in admin.pem -text -noout
+          for i in {1..3}
+          do
+            openssl genpkey -algorithm RSA -out e2e-$i.node.key -pkeyopt rsa_keygen_bits:4096
+            openssl req -new -key e2e-$i.node.key -out e2e-$i.node.csr -subj "/C=DK/CN=e2e-$i.node.metal.local"
+            openssl x509 -req -in e2e-$i.node.csr -CA root-ca.pem -CAkey root-ca.key -CAcreateserial -out e2e-$i.node.pem -days 365 -sha256 -extfile <(printf "basicConstraints=CA:FALSE\nkeyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment")
+            openssl x509 -in e2e-$i.node.pem -text -noout
+          done
+      - name: Install SCW CLI
+        run: |
+          curl -s https://raw.githubusercontent.com/scaleway/scaleway-cli/master/scripts/get.sh | sh
+      - name: Login to Scaleway
+        run: |
+          scw init organization-id=$SCW_ORG_ID access-key=$SCW_ACCESS_KEY secret-key=$SCW_SECRET_KEY project-id=$SCW_PROJECT_ID send-telemetry=false
+        env:
+          SCW_ORG_ID: ${{ secrets.SCW_ORG_ID }}
+          SCW_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
+          SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+          SCW_PROJECT_ID: ${{ github.event.inputs.SCW_PROJECT_ID }}
+      - name: Generate and provision SSH key
+        run: |
+          ssh-keygen -t rsa -b 4096 -C "e2e-scw@metal.intunderflow.github.com" -f ~/.ssh/id_rsa -N ""
+          scw iam ssh-key create name="github-actions" public-key="$(cat ~/.ssh/id_rsa.pub)" project-id="$SCW_PROJECT_ID"
+        env:
+          SCW_PROJECT_ID: ${{ github.event.inputs.SCW_PROJECT_ID }}
+      - name: Provision own SSH key
+        run: |
+          scw iam ssh-key create name="macbook" public-key="$(cat ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/ssh-key.txt)" project-id="$SCW_PROJECT_ID"
+        env:
+          SCW_PROJECT_ID: ${{ github.event.inputs.SCW_PROJECT_ID }}
+      - name: Provision servers
+        id: provision_servers
+        run: |
+          create_broker() {
+            BROKER_SERVER_IP=$(scw instance server create name=broker type=DEV1-S image=debian_bookworm zone=$SCW_ZONE -o json --wait | jq -r '.public_ip.address')
+            echo broker $BROKER_SERVER_IP
+            echo "broker_server_ip=$BROKER_SERVER_IP" >> $GITHUB_OUTPUT
+          }
+          create_broker &
+          create_agent() {
+            local index=$1
+            AGENT_SERVER_IP=$(scw instance server create name=agent-$index type=DEV1-S image=debian_bookworm zone=$SCW_ZONE -o json --wait | jq -r '.public_ip.address')
+            echo agent $index $AGENT_SERVER_IP
+            echo "agent_server_ip_$index=$AGENT_SERVER_IP" >> $GITHUB_OUTPUT
+          }
+          for i in {1..3}; do
+            create_agent $i &
+          done
+          wait
+        env:
+          SCW_ZONE: ${{ github.event.inputs.SCW_ZONE }}
+      - name: Create server DNS records
+        run: |
+          scw dns record add ${{ github.event.inputs.DOMAIN_NAME }} type=A name=broker.${{ github.run_id }}.test data=$BROKER_SERVER_IP
+          for i in {1..3}; do
+            eval "AGENT_SERVER_IP=\$AGENT_SERVER_IP_$i"
+            scw dns record add ${{ github.event.inputs.DOMAIN_NAME }} type=A name=agent-$i.${{ github.run_id }}.test data=$AGENT_SERVER_IP
+          done
+          sleep 20
+        env:
+          BROKER_SERVER_IP: ${{ steps.provision_servers.outputs.broker_server_ip }}
+          AGENT_SERVER_IP_1: ${{ steps.provision_servers.outputs.agent_server_ip_1 }}
+          AGENT_SERVER_IP_2: ${{ steps.provision_servers.outputs.agent_server_ip_2 }}
+          AGENT_SERVER_IP_3: ${{ steps.provision_servers.outputs.agent_server_ip_3 }}
+      - name: Add broker to known hosts
+        run: |
+          mkdir -p ~/.ssh && touch ~/.ssh/known_hosts && chmod +w ~/.ssh/known_hosts && ssh-keyscan -H "$SERVER_ADDR"  >> ~/.ssh/known_hosts
+        env:
+          SERVER_ADDR: "broker.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}"
+      - name: Provision PKI for broker
+        run: |
+          ssh root@$SERVER_ADDR 'apt update && apt install certbot -y'
+          ssh root@$SERVER_ADDR 'certbot certonly --domains "broker.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}" --standalone --non-interactive --agree-tos --email "e2e-testing.metal.intunderflow.github.com@lucy.sh"'
+        env:
+          SERVER_ADDR: "broker.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}"
+      - name: Provision broker software
+        run: |
+          ssh root@$SERVER_ADDR 'curl -fsSL https://get.docker.com -o get-docker.sh && sh ./get-docker.sh'
+          ssh root@$SERVER_ADDR 'mkdir -p /tmp/metal && rm -rf /tmp/metal/*'
+          envsubst < ${GITHUB_WORKSPACE}/broker/systemd/metal-broker.service > /tmp/metal-broker.service
+          scp /tmp/metal-broker.service root@$SERVER_ADDR:/tmp/metal/metal-broker.service
+          scp root-ca.pem root@$SERVER_ADDR:/tmp/metal/root-ca.pem
+          scp /tmp/metalctl root@$SERVER_ADDR:/root/metalctl
+          ssh root@$SERVER_ADDR 'mkdir -p /root/metal && cp -r /tmp/metal/* /root/metal/'
+          ssh root@$SERVER_ADDR 'cp /root/metal/metal-broker.service /etc/systemd/system/metal-broker.service && systemctl daemon-reload && systemctl enable metal-broker && systemctl restart metal-broker && systemctl status metal-broker --no-pager'
+        env:
+          SERVER_ADDR: "broker.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}"
+          IMAGE_NAME: "${{ github.event.inputs.BROKER_IMAGE_NAME }}:${{ github.sha }}"
+          PORT: 8443
+          ROOT_CA_PATH: "/tmp/metal/root-ca.pem"
+          TLS_KEY_PATH: "/etc/letsencrypt/live/broker.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}/privkey.pem"
+          TLS_CERT_PATH: "/etc/letsencrypt/live/broker.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}/fullchain.pem"
+      - name: Attempt to reach broker
+        run: |
+          curl --max-time 10 --retry 5 --retry-delay 5 --retry-max-time 40 --retry-all-errors --cert e2e-1.node.pem --key e2e-1.node.key https://$SERVER_ADDR:8443/v1/get_config
+        env:
+          SERVER_ADDR: "broker.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}"
+      - name: Provision agent software
+        run: |
+          provision_agent(){
+            local agent_id=$1
+            SERVER_ADDR="agent-$agent_id.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}"
+            ssh-keyscan -H "$SERVER_ADDR"  >> ~/.ssh/known_hosts
+            NODE_ID="e2e-$agent_id" envsubst < ${GITHUB_WORKSPACE}/agent/systemd/metal-agent-e2e.service > /tmp/metal-agent-e2e-$agent_id.service
+            scp /tmp/metal-agent root@$SERVER_ADDR:/root/metal-agent
+            scp /tmp/metalctl root@$SERVER_ADDR:/root/metalctl
+            scp /tmp/metal-agent-e2e-$agent_id.service root@$SERVER_ADDR:/root/metal-agent-e2e.service
+            scp root-ca.pem root@$SERVER_ADDR:/root/root-ca.pem
+            scp e2e-$agent_id.node.pem root@$SERVER_ADDR:/root/agent-e2e-cert.pem
+            scp e2e-$agent_id.node.key root@$SERVER_ADDR:/root/agent-e2e-cert.key
+            scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcd root@$SERVER_ADDR:/root/etcd
+            scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcdctl root@$SERVER_ADDR:/root/etcdctl
+            scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcd.service root@$SERVER_ADDR:/root/etcd.service
+            scp kube-apiserver root@$SERVER_ADDR:/root/kube-apiserver
+            scp kube-controller-manager root@$SERVER_ADDR:/root/kube-controller-manager
+            scp kube-scheduler root@$SERVER_ADDR:/root/kube-scheduler
+            scp kubectl root@$SERVER_ADDR:/root/kubectl
+            scp kubelet root@$SERVER_ADDR:/root/kubelet
+            scp coredns root@$SERVER_ADDR:/root/coredns
+            scp kube-proxy root@$SERVER_ADDR:/root/kube-proxy
+            scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kube-apiserver.service root@$SERVER_ADDR:/root/kube-apiserver.service
+            scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kube-controller-manager.service root@$SERVER_ADDR:/root/kube-controller-manager.service
+            scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kube-scheduler.service root@$SERVER_ADDR:/root/kube-scheduler.service    
+            scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kubelet.service root@$SERVER_ADDR:/root/kubelet.service    
+            scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/coredns.service root@$SERVER_ADDR:/root/coredns.service
+            scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kube-proxy.service root@$SERVER_ADDR:/root/kube-proxy.service
+            ssh root@$SERVER_ADDR 'sysctl -w net.ipv4.ip_forward=1'
+            ssh root@$SERVER_ADDR 'apt update && apt install wireguard -y'
+            ssh root@$SERVER_ADDR 'touch /root/wireguard-config-e2e.conf'
+            ssh root@$SERVER_ADDR 'wg genkey > /root/wireguard-key-e2e.txt'
+            ssh root@$SERVER_ADDR 'wg pubkey < /root/wireguard-key-e2e.txt > /root/wireguard-key-e2e.txt.public'
+            ssh root@$SERVER_ADDR 'chmod +x /root/metal-agent'
+            ssh root@$SERVER_ADDR 'cp /root/metal-agent-e2e.service /etc/systemd/system/metal-agent.service && systemctl daemon-reload'
+            ssh root@$SERVER_ADDR 'cp /root/etcd.service /etc/systemd/system/etcd.service && systemctl daemon-reload'
+            ssh root@$SERVER_ADDR 'cp /root/kube-apiserver.service /etc/systemd/system/kube-apiserver.service && systemctl daemon-reload'
+            ssh root@$SERVER_ADDR 'cp /root/kube-controller-manager.service /etc/systemd/system/kube-controller-manager.service && systemctl daemon-reload'
+            ssh root@$SERVER_ADDR 'cp /root/kube-scheduler.service /etc/systemd/system/kube-scheduler.service && systemctl daemon-reload'
+            ssh root@$SERVER_ADDR 'cp /root/kubelet.service /etc/systemd/system/kubelet.service && systemctl daemon-reload'
+            ssh root@$SERVER_ADDR 'cp /root/coredns.service /etc/systemd/system/coredns.service && systemctl daemon-reload'
+            ssh root@$SERVER_ADDR 'cp /root/kube-proxy.service /etc/systemd/system/kube-proxy.service && systemctl daemon-reload'
+            ssh root@$SERVER_ADDR 'touch /root/kube-apiserver.sh'
+            ssh root@$SERVER_ADDR 'touch /root/kube-controller-manager.sh'
+            ssh root@$SERVER_ADDR 'touch /root/kube-scheduler.sh'
+            ssh root@$SERVER_ADDR 'touch /root/coredns.sh'
+            ssh root@$SERVER_ADDR 'touch /root/kube-proxy.sh'
+            ssh root@$SERVER_ADDR 'chmod +x /root/kube-apiserver'
+            ssh root@$SERVER_ADDR 'chmod +x /root/kube-controller-manager'
+            ssh root@$SERVER_ADDR 'chmod +x /root/kube-scheduler'
+            ssh root@$SERVER_ADDR 'chmod +x /root/kubectl'
+            ssh root@$SERVER_ADDR 'chmod +x /root/kubelet'
+            ssh root@$SERVER_ADDR 'chmod +x /root/coredns'
+            ssh root@$SERVER_ADDR 'chmod +x /root/kube-proxy'
+            
+            ssh root@$SERVER_ADDR 'wget -q https://github.com/containerd/containerd/releases/download/v2.0.0/containerd-2.0.0-linux-amd64.tar.gz -O /root/containerd.tar.gz'
+            ssh root@$SERVER_ADDR 'tar Cxzvf /usr/local /root/containerd.tar.gz'
+            ssh root@$SERVER_ADDR 'wget -q https://raw.githubusercontent.com/containerd/containerd/main/containerd.service -O /root/containerd.service'
+            ssh root@$SERVER_ADDR 'cp /root/containerd.service /etc/systemd/system/containerd.service && systemctl daemon-reload'
+            ssh root@$SERVER_ADDR 'wget -q https://github.com/opencontainers/runc/releases/download/v1.2.1/runc.amd64 -O /root/runc.amd64'
+            ssh root@$SERVER_ADDR 'install -m 755 /root/runc.amd64 /usr/local/sbin/runc'
+          
+            ssh root@$SERVER_ADDR 'wget -q https://github.com/containernetworking/plugins/releases/download/v1.6.0/cni-plugins-linux-amd64-v1.6.0.tgz -O /root/cni-plugins.tgz'
+            ssh root@$SERVER_ADDR 'mkdir -p /opt/cni/bin && tar Cxzvf /opt/cni/bin /root/cni-plugins.tgz'
+            ssh root@$SERVER_ADDR 'mkdir -p /etc/cni/net.d/'
+            scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/10-containerd-net.conflist root@$SERVER_ADDR:/etc/cni/net.d/10-containerd-net.conflist
+          
+            ssh root@$SERVER_ADDR 'systemctl enable --now containerd'
+            
+            ssh root@$SERVER_ADDR 'systemctl disable systemd-resolved'
+            ssh root@$SERVER_ADDR 'systemctl stop systemd-resolved'
+          
+            ssh root@$SERVER_ADDR 'systemctl enable metal-agent && systemctl restart metal-agent && systemctl status metal-agent --no-pager'
+          }
+          for i in {1..3}; do
+            provision_agent $i &
+          done
+          wait
+        env:
+          MAXIMUM_RECONCILE_WAIT_TIME: "1"
+          BROKER: "https://broker.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}:8443"
+          CERT_FILE_PATH: "/root/agent-e2e-cert.pem"
+          KEY_FILE_PATH: "/root/agent-e2e-cert.key"
+          ROOT_CA_PATH: "/root/root-ca.pem"
+          WIREGUARD_CONFIG_FILE_PATH: "/etc/wireguard/metal.conf"
+          WIREGUARD_KEY_PATH: "/root/wireguard-key-e2e.txt"
+          WIREGUARD_SYSTEMD_NAME: "wg-quick@metal"
+          ETCD_CONFIG_FILE_PATH: "/root/etcd.conf"
+          ETCD_SYSTEMD_NAME: "etcd"
+          HOSTS_FILE_PATH: "/etc/hosts"
+          KUBERNETES_API_SERVER_PATH: "/root/kube-apiserver"
+          KUBERNETES_API_SERVER_LAUNCH_SCRIPT_PATH: "/root/kube-apiserver.sh"
+          KUBERNETES_API_SERVER_SYSTEMD_NAME: "kube-apiserver"
+          KUBERNETES_SERVICE_ACCOUNT_SIGNING_KEY_FILE: "/root/service-account-key-file.key"
+          KUBERNETES_SERVICE_ACCOUNT_KEY_FILE: "/root/service-account-key-file.pem"
+          KUBERNETES_CA_FILE_PATH: "/root/k8s-ca.pem"
+          KUBERNETES_API_SERVER_CERT_FILE: "/root/k8s-apiserver-cert.pem"
+          KUBERNETES_API_SERVER_KEY_FILE: "/root/k8s-apiserver-cert.key"
+          KUBERNETES_ENCRYPTION_CONFIG_FILE: "/root/k8s-encryption-config.yaml"
+          PKI_CA_PATH: "/root/ca.pem"
+          KUBERNETES_CONTROLLER_MANAGER_PATH: "/root/kube-controller-manager"
+          KUBERNETES_CONTROLLER_MANAGER_LAUNCH_SCRIPT_PATH: "/root/kube-controller-manager.sh"
+          KUBERNETES_CONTROLLER_MANAGER_SYSTEMD_NAME: "kube-controller-manager"
+          KUBERNETES_CONTROLLER_MANAGER_KUBECONFIG_FILE: "/root/kube-controller-manager.kubeconfig"
+          KUBERNETES_CONTROLLER_MANAGER_CERT_FILE: "/root/k8s-controller-manager-cert.pem"
+          KUBERNETES_CONTROLLER_MANAGER_KEY_FILE: "/root/k8s-controller-manager-cert.key"
+          KUBERNETES_SCHEDULER_PATH: "/root/kube-scheduler"
+          KUBERNETES_SCHEDULER_LAUNCH_SCRIPT_PATH: "/root/kube-scheduler.sh"
+          KUBERNETES_SCHEDULER_SYSTEMD_NAME: "kube-scheduler"
+          KUBERNETES_SCHEDULER_KUBECONFIG_FILE: "/root/kube-scheduler.kubeconfig"
+          KUBERNETES_SCHEDULER_CERT_FILE: "/root/k8s-scheduler-cert.pem"
+          KUBERNETES_SCHEDULER_KEY_FILE: "/root/k8s-scheduler-cert.key"
+          KUBERNETES_KUBELET_PATH: "/root/kubelet"
+          KUBERNETES_KUBELET_LAUNCH_SCRIPT_PATH: "/root/kubelet.sh"
+          KUBERNETES_KUBELET_SYSTEMD_NAME: "kubelet"
+          KUBERNETES_KUBELET_CA_FILE: "/root/k8s-kubelet-ca.pem"
+          KUBERNETES_KUBELET_KUBECONFIG_FILE: "/root/kubelet.kubeconfig"
+          KUBERNETES_KUBELET_KUBELET_CONFIG_FILE: "/root/kubelet-conf.yaml"
+          KUBERNETES_KUBELET_CERT_FILE: "/root/k8s-kubelet-cert.pem"
+          KUBERNETES_KUBELET_KEY_FILE: "/root/k8s-kubelet-cert.key"
+          COREDNS_PATH: "/root/coredns"
+          COREDNS_LAUNCH_SCRIPT_PATH: "/root/coredns.sh"
+          COREDNS_SYSTEMD_NAME: "coredns"
+          COREDNS_COREFILE: "/root/coredns-corefile"
+          COREDNS_CERT_FILE: "/root/coredns-cert.pem"
+          COREDNS_KEY_FILE: "/root/coredns-key.pem"
+          COREDNS_KUBECONFIG_FILE: "/root/coredns.kubeconfig"
+          KUBERNETES_PROXY_PATH: "/root/kube-proxy"
+          KUBERNETES_PROXY_LAUNCH_SCRIPT_PATH: "/root/kube-proxy.sh"
+          KUBERNETES_PROXY_SYSTEMD_NAME: "kube-proxy"
+          KUBERNETES_PROXY_CONFIG_FILE: "/root/kube-proxy-conf.yaml"
+      - name: Add agents to broker goal state
+        run: |
+          write_goal_state(){
+            local agent_id=$1
+            /tmp/metalctl node create e2e-$agent_id --broker "$BROKER" --cert-file admin.pem --key-file admin.key --wireguard-mesh-member --etcd-member --kubernetes-control-plane --kubernetes-worker --mtls-cert-file-path admin.pem --mtls-key-file-path admin.key
+          }
+          for i in {1..3}; do
+            write_goal_state $i
+          done
+          wait
+          /tmp/metalctl node list --broker "$BROKER" --mtls-cert-file-path admin.pem --mtls-key-file-path admin.key
+        env:
+          BROKER: "https://broker.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}:8443"
+      - name: Verify agents appear on broker
+        run: |
+          verify_agent_on_broker(){
+            local agent_id=$1
+            SERVER_ADDR="agent-$agent_id.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}"
+            ssh root@$SERVER_ADDR 'journalctl -u metal-agent --no-pager'
+            ssh root@$SERVER_ADDR 'systemctl status metal-agent --no-pager'
+            /tmp/metalctl e2e verify-node-actualstate-exists e2e-$agent_id --broker "$BROKER" --attempts 10 --delay 10 --mtls-cert-file-path admin.pem --mtls-key-file-path admin.key
+          }
+          for i in {1..3}; do
+            verify_agent_on_broker $i
+          done
+          wait
+        env:
+          BROKER: "https://broker.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}:8443"
+      - name: Verify cluster rollouts complete
+        run: |
+          check_command() {
+            output=$(/tmp/metalctl rollouts list --broker "$BROKER" --mtls-cert-file-path admin.pem --mtls-key-file-path admin.key)
+            echo "$output"
+            if echo "$output" | grep -q -- "-0 rollouts"; then
+              echo "Success!"
+              return 0
+            else
+              return 1
+            fi
+          }
+          
+          retry_count=0
+          max_retries=600
+          while ! check_command; do
+            retry_count=$((retry_count + 1))
+            /tmp/metalctl node list --broker "$BROKER" --mtls-cert-file-path admin.pem --mtls-key-file-path admin.key --hide-goal-state --hide-actual-state | grep ERROR || true
+
+            if [ $retry_count -ge $max_retries ]; then
+              echo "Max retries reached. Exiting with failure."
+              exit 1
+            fi
+
+            sleep 1
+          done
+        env:
+          BROKER: "https://broker.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}:8443"
+      - name: Report final status
+        run: |
+          /tmp/metalctl node list --broker "$BROKER" --mtls-cert-file-path admin.pem --mtls-key-file-path admin.key
+        env:
+          BROKER: "https://broker.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}:8443"
+      - name: Report SSH commands
+        run: |
+          echo "ssh root@broker.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}"
+          for i in {1..3}; do
+            echo "ssh root@agent-$i.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}"
+          done

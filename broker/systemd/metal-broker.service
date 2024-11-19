@@ -1,0 +1,15 @@
+[Unit]
+Description=Metal Broker
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/docker run --rm -v $ROOT_CA_PATH:$ROOT_CA_PATH -e ROOT_CA_PATH=$ROOT_CA_PATH -v $TLS_CERT_PATH:$TLS_CERT_PATH -e TLS_CERT_PATH=$TLS_CERT_PATH -v $TLS_KEY_PATH:$TLS_KEY_PATH -e TLS_KEY_PATH=$TLS_KEY_PATH -e PORT=$PORT -p $PORT:$PORT --name broker $IMAGE_NAME
+Restart=always
+RestartSec=10s
+TimeoutStartSec=120
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,79 @@
+on:
+  workflow_dispatch:
+    inputs:
+      SCW_PROJECT_ID:
+        description: "Scaleway project ID"
+        required: true
+        default: "bdc6ca27-5a56-4555-9c4f-64d3ea7faeb2"
+      SCW_ZONE:
+        description: "Scaleway zone"
+        required: true
+        default: "nl-ams-1"
+      DOMAIN_NAME:
+        description: "Domain name to use for DNS"
+        required: true
+        default: "metale2etesting.eu"
+
+concurrency:
+  group: e2e-scw
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install SCW CLI
+        run: |
+          curl -s https://raw.githubusercontent.com/scaleway/scaleway-cli/master/scripts/get.sh | sh
+      - name: Login to Scaleway
+        run: |
+          scw init organization-id=$SCW_ORG_ID access-key=$SCW_ACCESS_KEY secret-key=$SCW_SECRET_KEY project-id=$SCW_PROJECT_ID send-telemetry=false
+        env:
+          SCW_ORG_ID: ${{ secrets.SCW_ORG_ID }}
+          SCW_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
+          SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+          SCW_PROJECT_ID: ${{ github.event.inputs.SCW_PROJECT_ID }}
+      - name: Delete servers
+        run: |
+          OUTPUT=$(scw instance server list project-id=$SCW_PROJECT_ID zone=$SCW_ZONE -o json)
+          echo $OUTPUT
+          SERVER_IDS=$(echo $OUTPUT | jq -r '.[].id')
+          echo $SERVER_IDS
+          poweroff_server() {
+            local id=$1
+            echo "Powering off server $id"
+            scw instance server stop $id zone=$SCW_ZONE --wait || true
+          }
+          for SERVER_ID in $SERVER_IDS; do
+            poweroff_server $SERVER_ID &
+          done
+          wait
+          for SERVER_ID in $SERVER_IDS; do
+            echo "Deleting server $SERVER_ID"
+            scw instance server delete "$SERVER_ID" with-volumes=all with-ip=true zone=$SCW_ZONE --wait
+          done
+        env:
+          SCW_PROJECT_ID: ${{ github.event.inputs.SCW_PROJECT_ID }}
+          SCW_ZONE: ${{ github.event.inputs.SCW_ZONE }}
+      - name: Delete IPs
+        run: |
+          IP_IDS=$(scw instance ip list project-id=$SCW_PROJECT_ID zone=$SCW_ZONE -o json | jq -r '.[].id')
+          for IP_ID in $IP_IDS; do
+            echo "Deleting IP with ID: $IP_ID"
+            scw instance ip delete "$IP_ID" zone=$SCW_ZONE
+          done
+        env:
+          SCW_PROJECT_ID: ${{ github.event.inputs.SCW_PROJECT_ID }}
+          SCW_ZONE: ${{ github.event.inputs.SCW_ZONE }}
+      - name: Delete SSH keys
+        run: |
+          SSH_KEY_IDS=$(scw iam ssh-key list project-id="$SCW_PROJECT_ID" -o json | jq ".[].id")
+          for SSH_KEY_ID in $SSH_KEY_IDS; do
+           echo "Deleting SSH key with ID: $SSH_KEY_ID"
+           scw iam ssh-key delete ${SSH_KEY_ID//\"/}
+          done
+        env:
+          SCW_PROJECT_ID: ${{ github.event.inputs.SCW_PROJECT_ID }}
+      - name: Delete DNS records
+        run: |
+          scw dns record clear ${{ github.event.inputs.DOMAIN_NAME }}

@@ -1,0 +1,13 @@
+[Unit]
+Description=Kubernetes controller manager
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /root/kube-controller-manager.sh
+Restart=always
+RestartSec=10s
+TimeoutStartSec=120
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

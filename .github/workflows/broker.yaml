@@ -1,0 +1,88 @@
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+
+concurrency:
+  group: broker
+  cancel-in-progress: false
+
+jobs:
+  containers:
+    runs-on: ubuntu-latest
+    environment: broker
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        os: [ linux, darwin ]
+        arch: [ amd64, arm64 ]
+    env:
+      VARIANT: ${{ matrix.os }}-${{ matrix.arch }}
+      IMAGE_NAME: broker-${{ matrix.os }}-${{ matrix.arch }}
+    outputs:
+      linux-amd64-full-image-name: ${{ steps.push-image.outputs.linux-amd64-full-image-name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ">=1.21.0"
+      - name: Build broker
+        run: cd ${GITHUB_WORKSPACE}/broker/go && GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o bin/broker .
+      - name: Build container
+        run: cd ${GITHUB_WORKSPACE}/broker/go && docker build . --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Push image
+        id: push-image
+        run: |
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          [ [ "${{ github.ref }}" == "refs/tags/"* ] ] && VERSION=$(echo $VERSION | sed -e 's/^v//')      
+          [ "$VERSION" == "main" ] && VERSION=latest
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:${{github.sha}}
+          docker push $IMAGE_ID:${{github.sha}}
+          echo "${{ env.VARIANT }}-full-image-name=$(docker inspect --format='{{index .RepoDigests 0}}' $IMAGE_ID:$VERSION)" >> "$GITHUB_OUTPUT"
+  deploy-scw:
+    runs-on: ubuntu-latest
+    environment: broker
+    needs: containers
+    env:
+      SSH_IP: ${{ secrets.SSH_IP_BROKER_SCW }}
+      PORT: 443
+      ROOT_CA_PATH: "/root/metal/root-ca.pem"
+      TLS_CERT_PATH: "/etc/letsencrypt/live/metal-broker.lucy.sh/fullchain.pem"
+      TLS_KEY_PATH: "/etc/letsencrypt/live/metal-broker.lucy.sh/privkey.pem"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare SSH
+        run: |
+          eval `ssh-agent -s`
+          echo "${SSH_PRIVATE_KEY}" > /tmp/metal-ssh.key && chmod 400 /tmp/metal-ssh.key
+          mkdir -p ~/.ssh && touch ~/.ssh/known_hosts && cat ${GITHUB_WORKSPACE}/broker/ssh/hosts-scw.txt  >> ~/.ssh/known_hosts
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY_BROKER_SCW }}
+      - run: |
+          ssh -i /tmp/metal-ssh.key root@$SSH_IP 'mkdir -p /tmp/metal && rm -rf /tmp/metal/*'
+      - run: |
+          envsubst < ${GITHUB_WORKSPACE}/broker/systemd/metal-broker.service > /tmp/metal-broker.service
+          scp -i /tmp/metal-ssh.key /tmp/metal-broker.service root@$SSH_IP:/tmp/metal/metal-broker.service
+          scp -i /tmp/metal-ssh.key ${GITHUB_WORKSPACE}/pki/root-ca.pem root@$SSH_IP:/tmp/metal/root-ca.pem
+        env:
+          IMAGE_NAME: ${{ needs.containers.outputs.linux-amd64-full-image-name }}
+      - run: |
+          ssh -i /tmp/metal-ssh.key root@$SSH_IP 'mkdir -p /root/metal && cp -r /tmp/metal/* /root/metal/'
+          ssh -i /tmp/metal-ssh.key root@$SSH_IP 'cp /root/metal/metal-broker.service /etc/systemd/system/metal-broker.service && systemctl daemon-reload && systemctl enable metal-broker && systemctl restart metal-broker'
+      - run: |
+          ssh -i /tmp/metal-ssh.key root@$SSH_IP 'docker system prune -af'

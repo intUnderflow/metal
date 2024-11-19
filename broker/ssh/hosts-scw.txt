@@ -1,0 +1,8 @@
+# metal-broker.lucy.sh:22 SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u2
+|1|8NOyVJcyrhYrqZnUfjFtBr9uOO8=|S6t5wpp/gw5oVwLSt/a0MNJ/dNg= ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7WAz3/a1kL7I565H8zKXh78Z1IfUbsyF1MsR7XQYGs0OgvMebEbCkcM0ftpWXfdDswSQ/EOoRy0ZDYUDQmjEiiwvGGBxndVHL3O5JTchAdKl3q9/W5HRlxCUACc9w3YPLP4zBx4ioucmGYANQB0vSHlrgTpKrWRPs0UvNHkjI5kAKS4KinHKT/3QXrj8LitllGvUjueSDcf+mCoNMgYRgDP7zdRjqTX+PryrJ5mAzTu1KKMFUgpNPbbZumZiww8smT/4frB+pfkgZ+I9sg6qv/LaSRFeomkX2pEFnrC06etaGu7T7C5r7bwFYggeevHQjac1np9m1ry5Q+FDdWyQ/EHgasEo5dHh4C4S6+oTqvgkctsnCjMbP/aHxwy5lWnsETpEHha0RbJtqlZ48fJnQEI9IXIa586hm3yMwRwA0ZiqTtnnKV/3/6+8ROKtQU2gc216c6Be1cJr+7E49pK1FQ9QAlTD5Iu3s54nf2UksSkaFQyWfS07FkLjpXOQjm7E=
+# metal-broker.lucy.sh:22 SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u2
+|1|zfxEd+8BOyWRYMP+wtF4Lchu2hU=|scqqNS5N/R25s+27ih12qTgRQ7M= ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBAqbld1e1UE84eCbdei7QHOqVbz72NQcYkK0ozjCkvJh1hxi3ErwMjxxCzOtFUIhEUk/lFONoHWTMWVrGFJZwVo=
+# metal-broker.lucy.sh:22 SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u2
+|1|KKWHWb8OJBmbELtvrcmBz35EoIk=|ZB4VP41EvlgFqJmCzb4v7LDxiik= ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID9Jb6sM0CUxoU4q7BCLsYDNACV2G2nAZLj5FK9wTjiD
+# metal-broker.lucy.sh:22 SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u2
+# metal-broker.lucy.sh:22 SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u2
