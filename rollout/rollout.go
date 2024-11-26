@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/intunderflow/metal/agent/go/actualstate/coredns"
 	"github.com/intunderflow/metal/agent/go/actualstate/dns"
+	"github.com/intunderflow/metal/agent/go/actualstate/downloader"
 	"github.com/intunderflow/metal/agent/go/actualstate/etcd"
 	"github.com/intunderflow/metal/agent/go/actualstate/kubernetes/apiserver"
 	controller_manager "github.com/intunderflow/metal/agent/go/actualstate/kubernetes/controller-manager"
@@ -54,7 +55,7 @@ type Priority struct {
 	Minor int
 }
 
-func NewService(wireguardService wireguard.Wireguard, etcdService etcd.Etcd, kubernetesAPIServerService apiserver.ApiServer, kubernetesControllerManagerService controller_manager.ControllerManager, kubernetesSchedulerService scheduler.Scheduler, dnsService dns.DNS, pkiService pki.PKI, kubeletService kubelet.Kubelet, coreDNSService coredns.CoreDNS, kubernetesProxyService proxy.Proxy) *Service {
+func NewService(wireguardService wireguard.Wireguard, etcdService etcd.Etcd, kubernetesAPIServerService apiserver.ApiServer, kubernetesControllerManagerService controller_manager.ControllerManager, kubernetesSchedulerService scheduler.Scheduler, dnsService dns.DNS, pkiService pki.PKI, kubeletService kubelet.Kubelet, coreDNSService coredns.CoreDNS, kubernetesProxyService proxy.Proxy, downloadService downloader.Downloader) *Service {
 	return &Service{
 		wireguardService:                   wireguardService,
 		etcdService:                        etcdService,
@@ -66,6 +67,7 @@ func NewService(wireguardService wireguard.Wireguard, etcdService etcd.Etcd, kub
 		kubeletService:                     kubeletService,
 		coreDNSService:                     coreDNSService,
 		kubernetesProxyService:             kubernetesProxyService,
+		downloadService:                    downloadService,
 	}
 }
 
@@ -80,6 +82,7 @@ type Service struct {
 	kubeletService                     kubelet.Kubelet
 	coreDNSService                     coredns.CoreDNS
 	kubernetesProxyService             proxy.Proxy
+	downloadService                    downloader.Downloader
 }
 
 func (r *Service) GetRollouts(config *config.Config) ([]Rollout, error) {
@@ -136,6 +139,16 @@ func (r *Service) getRolloutsForNode(config *config.Config, node *config.Node) (
 	}
 
 	var rollouts []Rollout
+
+	if node.GoalState.KubernetesAPIServerBinary != "" && !hasBinary(node.ActualState.DownloadedBinaries, "kube-apiserver", node.GoalState.KubernetesAPIServerBinaryHash) {
+		rollouts = append(rollouts, &downloadBinary{
+			nodeID:          node.GoalState.ID,
+			key:             "kube-apiserver",
+			url:             node.GoalState.KubernetesAPIServerBinary,
+			expectedHash:    node.GoalState.KubernetesAPIServerBinaryHash,
+			downloadService: r.downloadService,
+		})
+	}
 
 	if node.GoalState.WireguardMeshMember {
 		if node.ActualState.WireguardStatus != "HEALTHY" {
@@ -815,4 +828,11 @@ func deriveRandomnessSeedFromString(input string) int64 {
 
 func getPriorityForNodeID(nodeID string) int {
 	return rand.New(rand.NewSource(deriveRandomnessSeedFromString(nodeID))).Int()
+}
+
+func hasBinary(binaries map[string]string, key string, hash string) bool {
+	if value, ok := binaries[key]; ok {
+		return value == hash
+	}
+	return false
 }

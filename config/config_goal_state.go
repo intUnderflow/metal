@@ -23,6 +23,12 @@ type NodeGoalState struct {
 
 	// If this boolean is true then the node will be a Kubernetes worker
 	KubernetesWorker bool `json:"kubernetes_worker"`
+
+	// The URL of the Kubernetes API server binary to use (maps to kube-apiserver)
+	KubernetesAPIServerBinary string `json:"kubernetes_api_server_binary"`
+
+	// The hash of the content expected at the URL of the Kubernetes API server binary (if empty no hash check is done)
+	KubernetesAPIServerBinaryHash string `json:"kubernetes_api_server_binary_hash"`
 }
 
 func (n *NodeGoalState) ContentsForSignature() ([]byte, error) {

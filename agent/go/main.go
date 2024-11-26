@@ -203,7 +203,7 @@ func run() error {
 	)
 	downloadService := downloader.NewDownloader(downloaderFilePath)
 	actualState := actualstate.NewActualState(nodeID, endpointGetter, wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService, downloadService)
-	rolloutService := rollout.NewService(wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService)
+	rolloutService := rollout.NewService(wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService, downloadService)
 
 	requestTerminate := &atomic.Bool{}
 	terminateChannel := make(chan os.Signal, 1)
