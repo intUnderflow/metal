@@ -77,6 +77,10 @@ type NodeActualState struct {
 
 	// KubernetesProxyStatus is the status of the kube-proxy service
 	KubernetesProxyStatus string `json:"kubernetes_proxy_status"`
+
+	// DownloadedBinaries is a map of binary names onto SHA256 hashes present on the node, it is used to determine
+	// if a binary needs to be updated
+	DownloadedBinaries map[string]string `json:"downloaded_binaries"`
 }
 
 func (n *NodeActualState) ContentsForSignature() ([]byte, error) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/intunderflow/metal/agent/go/actualstate/coredns"
 	"github.com/intunderflow/metal/agent/go/actualstate/dns"
+	"github.com/intunderflow/metal/agent/go/actualstate/downloader"
 	"github.com/intunderflow/metal/agent/go/actualstate/endpoint"
 	"github.com/intunderflow/metal/agent/go/actualstate/etcd"
 	"github.com/intunderflow/metal/agent/go/actualstate/kubernetes/apiserver"
@@ -36,6 +37,7 @@ func NewActualState(
 	kubernetesKubeletService kubelet.Kubelet,
 	coreDNSService coredns.CoreDNS,
 	kubernetesProxyService proxy.Proxy,
+	downloadService downloader.Downloader,
 ) ActualState {
 	return &actualStateImpl{
 		mutex:                              &sync.RWMutex{},
@@ -52,6 +54,7 @@ func NewActualState(
 		kubernetesKubeletService:           kubernetesKubeletService,
 		coreDNSService:                     coreDNSService,
 		kubernetesProxyService:             kubernetesProxyService,
+		downloadService:                    downloadService,
 	}
 }
 
@@ -70,6 +73,7 @@ type actualStateImpl struct {
 	kubernetesKubeletService           kubelet.Kubelet
 	coreDNSService                     coredns.CoreDNS
 	kubernetesProxyService             proxy.Proxy
+	downloadService                    downloader.Downloader
 }
 
 func (a *actualStateImpl) GetActualState(ctx context.Context) (*config.NodeActualState, error) {
@@ -122,6 +126,7 @@ func (a *actualStateImpl) GetActualState(ctx context.Context) (*config.NodeActua
 		CoreDNSStatus:                              deriveServiceHealth(a.coreDNSService.CheckHealthy(ctx)),
 		KubernetesProxySpec:                        a.kubernetesProxyService.GetCurrentlyAppliedSpec(),
 		KubernetesProxyStatus:                      deriveServiceHealth(a.kubernetesProxyService.CheckHealthy(ctx)),
+		DownloadedBinaries:                         a.downloadService.GetBinariesActualState(),
 	}, nil
 }
 

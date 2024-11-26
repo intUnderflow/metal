@@ -6,6 +6,7 @@ import (
 	"github.com/intunderflow/metal/agent/go/actualstate"
 	"github.com/intunderflow/metal/agent/go/actualstate/coredns"
 	"github.com/intunderflow/metal/agent/go/actualstate/dns"
+	"github.com/intunderflow/metal/agent/go/actualstate/downloader"
 	"github.com/intunderflow/metal/agent/go/actualstate/endpoint"
 	"github.com/intunderflow/metal/agent/go/actualstate/etcd"
 	"github.com/intunderflow/metal/agent/go/actualstate/kubernetes/apiserver"
@@ -90,6 +91,8 @@ var (
 	kubernetesProxyLaunchScriptPath = os.Getenv("KUBERNETES_PROXY_LAUNCH_SCRIPT_PATH")
 	kubernetesProxySystemdName      = os.Getenv("KUBERNETES_PROXY_SYSTEMD_NAME")
 	kubernetesProxyConfigFile       = os.Getenv("KUBERNETES_PROXY_CONFIG_FILE")
+
+	downloaderFilePath = os.Getenv("DOWNLOADER_FILE_PATH")
 
 	// Used to store the CA bundle for Kubernetes from all nodes
 	kubernetesCAFile = os.Getenv("KUBERNETES_CA_FILE_PATH")
@@ -198,7 +201,8 @@ func run() error {
 		kubernetesProxySystemdName,
 		kubernetesProxyConfigFile,
 	)
-	actualState := actualstate.NewActualState(nodeID, endpointGetter, wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService)
+	downloadService := downloader.NewDownloader(downloaderFilePath)
+	actualState := actualstate.NewActualState(nodeID, endpointGetter, wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService, downloadService)
 	rolloutService := rollout.NewService(wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService)
 
 	requestTerminate := &atomic.Bool{}
