@@ -2,7 +2,7 @@ package downloader
 
 import (
 	"crypto/sha256"
-	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"maps"
@@ -69,7 +69,7 @@ func (d *downloaderImpl) DownloadBinary(key string, url string, expectedHash str
 		return err
 	}
 	responseBytesHash := sha256.Sum256(responseBytes)
-	responseBytesHashStr := base64.StdEncoding.EncodeToString(responseBytesHash[:])
+	responseBytesHashStr := hex.EncodeToString(responseBytesHash[:])
 	if responseBytesHashStr != expectedHash {
 		return fmt.Errorf("expected hash %s, got %s", expectedHash, responseBytesHash)
 	}
