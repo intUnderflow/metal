@@ -29,6 +29,12 @@ type NodeGoalState struct {
 
 	// The hash of the content expected at the URL of the Kubernetes API server binary (if empty no hash check is done)
 	KubernetesAPIServerBinaryHash string `json:"kubernetes_api_server_binary_hash"`
+
+	// The URL of the Kubernetes controller manager binary to use (maps to kube-controller-manager)
+	KubernetesControllerManagerBinary string `json:"kubernetes_controller_manager_binary"`
+
+	// The hash of the content expected at the URL of the Kubernetes controller manager binary (if empty no hash check is done)
+	KubernetesControllerManagerBinaryHash string `json:"kubernetes_controller_manager_binary_hash"`
 }
 
 func (n *NodeGoalState) ContentsForSignature() ([]byte, error) {

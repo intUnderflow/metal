@@ -93,7 +93,6 @@ jobs:
           fetch-depth: 0
       - name: Download Kubernetes
         run: |
-          wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-controller-manager -O kube-controller-manager
           wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-scheduler -O kube-scheduler
           wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kubectl -O kubectl
           wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kubelet -O kubelet
@@ -229,7 +228,6 @@ jobs:
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcd root@$SERVER_ADDR:/root/etcd
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcdctl root@$SERVER_ADDR:/root/etcdctl
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcd.service root@$SERVER_ADDR:/root/etcd.service
-            scp kube-controller-manager root@$SERVER_ADDR:/root/kube-controller-manager
             scp kube-scheduler root@$SERVER_ADDR:/root/kube-scheduler
             scp kubectl root@$SERVER_ADDR:/root/kubectl
             scp kubelet root@$SERVER_ADDR:/root/kubelet
@@ -260,7 +258,6 @@ jobs:
             ssh root@$SERVER_ADDR 'touch /root/kube-scheduler.sh'
             ssh root@$SERVER_ADDR 'touch /root/coredns.sh'
             ssh root@$SERVER_ADDR 'touch /root/kube-proxy.sh'
-            ssh root@$SERVER_ADDR 'chmod +x /root/kube-controller-manager'
             ssh root@$SERVER_ADDR 'chmod +x /root/kube-scheduler'
             ssh root@$SERVER_ADDR 'chmod +x /root/kubectl'
             ssh root@$SERVER_ADDR 'chmod +x /root/kubelet'
@@ -313,7 +310,7 @@ jobs:
           KUBERNETES_API_SERVER_KEY_FILE: "/root/k8s-apiserver-cert.key"
           KUBERNETES_ENCRYPTION_CONFIG_FILE: "/root/k8s-encryption-config.yaml"
           PKI_CA_PATH: "/root/ca.pem"
-          KUBERNETES_CONTROLLER_MANAGER_PATH: "/root/kube-controller-manager"
+          KUBERNETES_CONTROLLER_MANAGER_PATH: "/root/downloads/kube-controller-manager"
           KUBERNETES_CONTROLLER_MANAGER_LAUNCH_SCRIPT_PATH: "/root/kube-controller-manager.sh"
           KUBERNETES_CONTROLLER_MANAGER_SYSTEMD_NAME: "kube-controller-manager"
           KUBERNETES_CONTROLLER_MANAGER_KUBECONFIG_FILE: "/root/kube-controller-manager.kubeconfig"
@@ -349,7 +346,7 @@ jobs:
         run: |
           write_goal_state(){
             local agent_id=$1
-            /tmp/metalctl node create e2e-$agent_id --broker "$BROKER" --cert-file admin.pem --key-file admin.key --wireguard-mesh-member --etcd-member --kubernetes-control-plane --kubernetes-worker --mtls-cert-file-path admin.pem --mtls-key-file-path admin.key --kube-apiserver-url "$KUBE_APISERVER_URL" --kube-apiserver-hash "$KUBE_APISERVER_HASH"
+            /tmp/metalctl node create e2e-$agent_id --broker "$BROKER" --cert-file admin.pem --key-file admin.key --wireguard-mesh-member --etcd-member --kubernetes-control-plane --kubernetes-worker --mtls-cert-file-path admin.pem --mtls-key-file-path admin.key --kube-apiserver-url "$KUBE_APISERVER_URL" --kube-apiserver-hash "$KUBE_APISERVER_HASH" --kube-controller-manager-url "$KUBE_CONTROLLER_MANAGER_URL" --kube-controller-manager-hash "$KUBE_CONTROLLER_MANAGER_HASH"
           }
           for i in {1..3}; do
             write_goal_state $i
@@ -360,6 +357,8 @@ jobs:
           BROKER: "https://broker.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}:8443"
           KUBE_APISERVER_URL: "https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-apiserver"
           KUBE_APISERVER_HASH: "346cceb8d67c0b3efae3575d5addfd2a1086e8023013d1e6472e370b8951639d"
+          KUBE_CONTROLLER_MANAGER_URL: "https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-controller-manager"
+          KUBE_CONTROLLER_MANAGER_HASH: "b1e16bceee2bc76a6f973784ca611d8e972aa7ed213ae75255097a60f85752fb"
       - name: Verify agents appear on broker
         run: |
           verify_agent_on_broker(){
