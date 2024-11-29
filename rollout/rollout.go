@@ -160,6 +160,16 @@ func (r *Service) getRolloutsForNode(config *config.Config, node *config.Node) (
 		})
 	}
 
+	if node.GoalState.KubernetesSchedulerBinary != "" && !hasBinary(node.ActualState.DownloadedBinaries, "kube-scheduler", node.GoalState.KubernetesSchedulerBinaryHash) {
+		rollouts = append(rollouts, &downloadBinary{
+			nodeID:          node.GoalState.ID,
+			key:             "kube-scheduler",
+			url:             node.GoalState.KubernetesSchedulerBinary,
+			expectedHash:    node.GoalState.KubernetesSchedulerBinaryHash,
+			downloadService: r.downloadService,
+		})
+	}
+
 	if node.GoalState.WireguardMeshMember {
 		if node.ActualState.WireguardStatus != "HEALTHY" {
 			rollouts = append(rollouts, &wireguardWaitUntilHealthy{

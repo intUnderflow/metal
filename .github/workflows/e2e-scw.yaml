@@ -93,7 +93,6 @@ jobs:
           fetch-depth: 0
       - name: Download Kubernetes
         run: |
-          wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-scheduler -O kube-scheduler
           wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kubectl -O kubectl
           wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kubelet -O kubelet
           wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-proxy -O kube-proxy
@@ -228,7 +227,6 @@ jobs:
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcd root@$SERVER_ADDR:/root/etcd
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcdctl root@$SERVER_ADDR:/root/etcdctl
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcd.service root@$SERVER_ADDR:/root/etcd.service
-            scp kube-scheduler root@$SERVER_ADDR:/root/kube-scheduler
             scp kubectl root@$SERVER_ADDR:/root/kubectl
             scp kubelet root@$SERVER_ADDR:/root/kubelet
             scp coredns root@$SERVER_ADDR:/root/coredns
@@ -258,7 +256,6 @@ jobs:
             ssh root@$SERVER_ADDR 'touch /root/kube-scheduler.sh'
             ssh root@$SERVER_ADDR 'touch /root/coredns.sh'
             ssh root@$SERVER_ADDR 'touch /root/kube-proxy.sh'
-            ssh root@$SERVER_ADDR 'chmod +x /root/kube-scheduler'
             ssh root@$SERVER_ADDR 'chmod +x /root/kubectl'
             ssh root@$SERVER_ADDR 'chmod +x /root/kubelet'
             ssh root@$SERVER_ADDR 'chmod +x /root/coredns'
@@ -316,7 +313,7 @@ jobs:
           KUBERNETES_CONTROLLER_MANAGER_KUBECONFIG_FILE: "/root/kube-controller-manager.kubeconfig"
           KUBERNETES_CONTROLLER_MANAGER_CERT_FILE: "/root/k8s-controller-manager-cert.pem"
           KUBERNETES_CONTROLLER_MANAGER_KEY_FILE: "/root/k8s-controller-manager-cert.key"
-          KUBERNETES_SCHEDULER_PATH: "/root/kube-scheduler"
+          KUBERNETES_SCHEDULER_PATH: "/root/downloads/kube-scheduler"
           KUBERNETES_SCHEDULER_LAUNCH_SCRIPT_PATH: "/root/kube-scheduler.sh"
           KUBERNETES_SCHEDULER_SYSTEMD_NAME: "kube-scheduler"
           KUBERNETES_SCHEDULER_KUBECONFIG_FILE: "/root/kube-scheduler.kubeconfig"
