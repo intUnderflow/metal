@@ -39,7 +39,7 @@ func (d *downloaderImpl) GetBinariesActualState() map[string]string {
 	d.mutex.RLock()
 	defer d.mutex.RUnlock()
 
-	var result map[string]string
+	result := make(map[string]string)
 	maps.Copy(result, d.binaries)
 	return result
 }
