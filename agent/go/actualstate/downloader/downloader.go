@@ -74,7 +74,7 @@ func (d *downloaderImpl) DownloadBinary(key string, url string, expectedHash str
 		return fmt.Errorf("expected hash %s, got %s", expectedHash, responseBytesHash)
 	}
 
-	err = os.WriteFile(path, responseBytes, 0600)
+	err = os.WriteFile(path, responseBytes, 0700)
 	if err != nil {
 		return err
 	}
