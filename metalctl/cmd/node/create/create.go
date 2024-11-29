@@ -18,6 +18,8 @@ var wireguardMeshMember bool
 var etcdMember bool
 var kubernetesControlPlane bool
 var kubernetesWorker bool
+var kubeAPIServerURL string
+var kubeAPIServerHash string
 var mtlsCertFilePath string
 var mtlsKeyFilePath string
 
@@ -45,12 +47,14 @@ func Cmd() *cobra.Command {
 				return err
 			}
 			nodeGoalState := &config.NodeGoalState{
-				ID:                     id,
-				CreatedAt:              time.Now().UTC(),
-				WireguardMeshMember:    wireguardMeshMember,
-				EtcdMember:             etcdMember,
-				KubernetesControlPlane: kubernetesControlPlane,
-				KubernetesWorker:       kubernetesWorker,
+				ID:                            id,
+				CreatedAt:                     time.Now().UTC(),
+				WireguardMeshMember:           wireguardMeshMember,
+				EtcdMember:                    etcdMember,
+				KubernetesControlPlane:        kubernetesControlPlane,
+				KubernetesWorker:              kubernetesWorker,
+				KubernetesAPIServerBinary:     kubeAPIServerURL,
+				KubernetesAPIServerBinaryHash: kubeAPIServerHash,
 			}
 			signature, err := signer.Sign(nodeGoalState)
 			if err != nil {
@@ -78,6 +82,8 @@ func Cmd() *cobra.Command {
 	create.PersistentFlags().BoolVar(&etcdMember, "etcd-member", false, "Give node etcd membership")
 	create.PersistentFlags().BoolVar(&kubernetesControlPlane, "kubernetes-control-plane", false, "Give node kubernetes control plane membership")
 	create.PersistentFlags().BoolVar(&kubernetesWorker, "kubernetes-worker", false, "Give node kubernetes worker status")
+	create.PersistentFlags().StringVar(&kubeAPIServerURL, "kube-apiserver-url", "", "URL of kube-apiserver binary to download")
+	create.PersistentFlags().StringVar(&kubeAPIServerHash, "kube-apiserver-hash", "", "Expected sha256 hash of kube-apiserver binary")
 	create.PersistentFlags().StringVar(&mtlsCertFilePath, "mtls-cert-file-path", "", "Mutual TLS Certificate File Path")
 	create.PersistentFlags().StringVar(&mtlsKeyFilePath, "mtls-key-file-path", "", "Mutual TLS Key File Path")
 	return create
