@@ -93,7 +93,6 @@ jobs:
           fetch-depth: 0
       - name: Download Kubernetes
         run: |
-          wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-apiserver -O kube-apiserver
           wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-controller-manager -O kube-controller-manager
           wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-scheduler -O kube-scheduler
           wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kubectl -O kubectl
@@ -230,7 +229,6 @@ jobs:
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcd root@$SERVER_ADDR:/root/etcd
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcdctl root@$SERVER_ADDR:/root/etcdctl
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcd.service root@$SERVER_ADDR:/root/etcd.service
-            scp kube-apiserver root@$SERVER_ADDR:/root/kube-apiserver
             scp kube-controller-manager root@$SERVER_ADDR:/root/kube-controller-manager
             scp kube-scheduler root@$SERVER_ADDR:/root/kube-scheduler
             scp kubectl root@$SERVER_ADDR:/root/kubectl
@@ -262,7 +260,6 @@ jobs:
             ssh root@$SERVER_ADDR 'touch /root/kube-scheduler.sh'
             ssh root@$SERVER_ADDR 'touch /root/coredns.sh'
             ssh root@$SERVER_ADDR 'touch /root/kube-proxy.sh'
-            ssh root@$SERVER_ADDR 'chmod +x /root/kube-apiserver'
             ssh root@$SERVER_ADDR 'chmod +x /root/kube-controller-manager'
             ssh root@$SERVER_ADDR 'chmod +x /root/kube-scheduler'
             ssh root@$SERVER_ADDR 'chmod +x /root/kubectl'
