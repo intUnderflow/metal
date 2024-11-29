@@ -302,7 +302,7 @@ jobs:
           ETCD_CONFIG_FILE_PATH: "/root/etcd.conf"
           ETCD_SYSTEMD_NAME: "etcd"
           HOSTS_FILE_PATH: "/etc/hosts"
-          KUBERNETES_API_SERVER_PATH: "/root/kube-apiserver"
+          KUBERNETES_API_SERVER_PATH: "/root/downloads/kube-apiserver"
           KUBERNETES_API_SERVER_LAUNCH_SCRIPT_PATH: "/root/kube-apiserver.sh"
           KUBERNETES_API_SERVER_SYSTEMD_NAME: "kube-apiserver"
           KUBERNETES_SERVICE_ACCOUNT_SIGNING_KEY_FILE: "/root/service-account-key-file.key"
@@ -343,6 +343,7 @@ jobs:
           KUBERNETES_PROXY_LAUNCH_SCRIPT_PATH: "/root/kube-proxy.sh"
           KUBERNETES_PROXY_SYSTEMD_NAME: "kube-proxy"
           KUBERNETES_PROXY_CONFIG_FILE: "/root/kube-proxy-conf.yaml"
+          DOWNLOADER_FILE_PATH: "/root/downloads"
       - name: Add agents to broker goal state
         run: |
           write_goal_state(){
