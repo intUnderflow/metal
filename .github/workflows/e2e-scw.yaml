@@ -266,6 +266,7 @@ jobs:
             ssh root@$SERVER_ADDR 'chmod +x /root/kubelet'
             ssh root@$SERVER_ADDR 'chmod +x /root/coredns'
             ssh root@$SERVER_ADDR 'chmod +x /root/kube-proxy'
+            ssh root@$SERVER_ADDR 'mkdir /root/downloads'
             
             ssh root@$SERVER_ADDR 'wget -q https://github.com/containerd/containerd/releases/download/v2.0.0/containerd-2.0.0-linux-amd64.tar.gz -O /root/containerd.tar.gz'
             ssh root@$SERVER_ADDR 'tar Cxzvf /usr/local /root/containerd.tar.gz'
