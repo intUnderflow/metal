@@ -180,6 +180,16 @@ func (r *Service) getRolloutsForNode(config *config.Config, node *config.Node) (
 		})
 	}
 
+	if node.GoalState.KubernetesProxyBinary != "" && !hasBinary(node.ActualState.DownloadedBinaries, "kube-proxy", node.GoalState.KubernetesProxyBinaryHash) {
+		rollouts = append(rollouts, &downloadBinary{
+			nodeID:          node.GoalState.ID,
+			key:             "kube-proxy",
+			url:             node.GoalState.KubernetesProxyBinary,
+			expectedHash:    node.GoalState.KubernetesProxyBinaryHash,
+			downloadService: r.downloadService,
+		})
+	}
+
 	if node.GoalState.WireguardMeshMember {
 		if node.ActualState.WireguardStatus != "HEALTHY" {
 			rollouts = append(rollouts, &wireguardWaitUntilHealthy{

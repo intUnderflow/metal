@@ -26,6 +26,8 @@ var kubeSchedulerURL string
 var kubeSchedulerHash string
 var kubeletURL string
 var kubeletHash string
+var kubeProxyURL string
+var kubeProxyHash string
 var mtlsCertFilePath string
 var mtlsKeyFilePath string
 
@@ -67,6 +69,8 @@ func Cmd() *cobra.Command {
 				KubernetesSchedulerBinaryHash:         kubeSchedulerHash,
 				KubernetesKubeletBinary:               kubeletURL,
 				KubernetesKubeletBinaryHash:           kubeletHash,
+				KubernetesProxyBinary:                 kubeProxyURL,
+				KubernetesProxyBinaryHash:             kubeProxyHash,
 			}
 			signature, err := signer.Sign(nodeGoalState)
 			if err != nil {
@@ -102,6 +106,8 @@ func Cmd() *cobra.Command {
 	create.PersistentFlags().StringVar(&kubeSchedulerHash, "kube-scheduler-hash", "", "Expected sha256 hash of kube-scheduler binary")
 	create.PersistentFlags().StringVar(&kubeletURL, "kubelet-url", "", "URL of kubelet binary")
 	create.PersistentFlags().StringVar(&kubeletHash, "kubelet-hash", "", "Expected sha256 hash of kubelet binary")
+	create.PersistentFlags().StringVar(&kubeProxyURL, "kube-proxy-url", "", "URL of kube-proxy binary")
+	create.PersistentFlags().StringVar(&kubeProxyHash, "kube-proxy-hash", "", "Expected sha256 hash of kube-proxy binary")
 	create.PersistentFlags().StringVar(&mtlsCertFilePath, "mtls-cert-file-path", "", "Mutual TLS Certificate File Path")
 	create.PersistentFlags().StringVar(&mtlsKeyFilePath, "mtls-key-file-path", "", "Mutual TLS Key File Path")
 	return create

@@ -47,6 +47,12 @@ type NodeGoalState struct {
 
 	// The hash of the content expected at the URL of the Kubernetes kubelet binary (if empty no hash check is done)
 	KubernetesKubeletBinaryHash string `json:"kubernetes_kubelet_binary_hash"`
+
+	// The url of the Kubernetes proxy binary to use (maps to kube-proxy)
+	KubernetesProxyBinary string `json:"kubernetes_kube_proxy_binary"`
+
+	// The hash of the content expected at the URL of the Kubernetes proxy binary (if empty no hash check is done)
+	KubernetesProxyBinaryHash string `json:"kubernetes_kube_proxy_binary_hash"`
 }
 
 func (n *NodeGoalState) ContentsForSignature() ([]byte, error) {
