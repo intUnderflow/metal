@@ -41,6 +41,12 @@ type NodeGoalState struct {
 
 	// The hash of the content expected at the URL of the Kubernetes scheduler binary (if empty no hash check is done)
 	KubernetesSchedulerBinaryHash string `json:"kubernetes_scheduler_binary_hash"`
+
+	// The URL of the Kubernetes kubelet binary to use (maps to kubelet)
+	KubernetesKubeletBinary string `json:"kubernetes_kubelet_binary"`
+
+	// The hash of the content expected at the URL of the Kubernetes kubelet binary (if empty no hash check is done)
+	KubernetesKubeletBinaryHash string `json:"kubernetes_kubelet_binary_hash"`
 }
 
 func (n *NodeGoalState) ContentsForSignature() ([]byte, error) {

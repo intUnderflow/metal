@@ -94,7 +94,6 @@ jobs:
       - name: Download Kubernetes
         run: |
           wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kubectl -O kubectl
-          wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kubelet -O kubelet
           wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-proxy -O kube-proxy
       - name: Download CoreDNS
         run: |
@@ -228,7 +227,6 @@ jobs:
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcdctl root@$SERVER_ADDR:/root/etcdctl
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcd.service root@$SERVER_ADDR:/root/etcd.service
             scp kubectl root@$SERVER_ADDR:/root/kubectl
-            scp kubelet root@$SERVER_ADDR:/root/kubelet
             scp coredns root@$SERVER_ADDR:/root/coredns
             scp kube-proxy root@$SERVER_ADDR:/root/kube-proxy
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kube-apiserver.service root@$SERVER_ADDR:/root/kube-apiserver.service
@@ -257,7 +255,6 @@ jobs:
             ssh root@$SERVER_ADDR 'touch /root/coredns.sh'
             ssh root@$SERVER_ADDR 'touch /root/kube-proxy.sh'
             ssh root@$SERVER_ADDR 'chmod +x /root/kubectl'
-            ssh root@$SERVER_ADDR 'chmod +x /root/kubelet'
             ssh root@$SERVER_ADDR 'chmod +x /root/coredns'
             ssh root@$SERVER_ADDR 'chmod +x /root/kube-proxy'
             ssh root@$SERVER_ADDR 'mkdir /root/downloads'
@@ -319,7 +316,7 @@ jobs:
           KUBERNETES_SCHEDULER_KUBECONFIG_FILE: "/root/kube-scheduler.kubeconfig"
           KUBERNETES_SCHEDULER_CERT_FILE: "/root/k8s-scheduler-cert.pem"
           KUBERNETES_SCHEDULER_KEY_FILE: "/root/k8s-scheduler-cert.key"
-          KUBERNETES_KUBELET_PATH: "/root/kubelet"
+          KUBERNETES_KUBELET_PATH: "/root/downloads/kubelet"
           KUBERNETES_KUBELET_LAUNCH_SCRIPT_PATH: "/root/kubelet.sh"
           KUBERNETES_KUBELET_SYSTEMD_NAME: "kubelet"
           KUBERNETES_KUBELET_CA_FILE: "/root/k8s-kubelet-ca.pem"
@@ -358,6 +355,8 @@ jobs:
           KUBE_CONTROLLER_MANAGER_HASH: "b1e16bceee2bc76a6f973784ca611d8e972aa7ed213ae75255097a60f85752fb"
           KUBE_SCHEDULER_URL: "https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-scheduler"
           KUBE_SCHEDULER_HASH: "c08a2c34f8c4235d5a4e8e99586bb6d7ccb90dc3f88d7f5f4573b0b939624e9c"
+          KUBELET_URL: "https://dl.k8s.io/v1.31.2/bin/linux/amd64/kubelet"
+          KUBELET_HASH: "b0de6290267bbb4f6bcd9c4d50bb331e335f8dc47653644ae278844bb04c1fb6"
       - name: Verify agents appear on broker
         run: |
           verify_agent_on_broker(){
