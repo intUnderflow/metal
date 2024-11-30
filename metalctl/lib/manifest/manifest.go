@@ -24,11 +24,11 @@ func FromFile(filename string) (*Manifest, error) {
 		return nil, err
 	}
 
-	manifest := &Manifest{}
-	err = json.Unmarshal(bytes, manifest)
+	manifest := Manifest{}
+	err = json.Unmarshal(bytes, &manifest)
 	if err != nil {
 		return nil, err
 	}
 
-	return manifest, nil
+	return &manifest, nil
 }
