@@ -60,16 +60,36 @@ func Cmd() *cobra.Command {
 					return err
 				}
 			}
-			manifestContent.KubeAPIServer.URL = kubeAPIServerURL
-			manifestContent.KubeAPIServer.Hash = kubeAPIServerHash
-			manifestContent.KubeControllerManager.URL = kubeControllerManagerURL
-			manifestContent.KubeControllerManager.Hash = kubeControllerManagerHash
-			manifestContent.KubeScheduler.URL = kubeSchedulerURL
-			manifestContent.KubeScheduler.Hash = kubeSchedulerHash
-			manifestContent.Kubelet.URL = kubeletURL
-			manifestContent.Kubelet.Hash = kubeletHash
-			manifestContent.KubeProxy.URL = kubeProxyURL
-			manifestContent.KubeProxy.Hash = kubeProxyHash
+			if kubeAPIServerURL != "" {
+				manifestContent.KubeAPIServer.URL = kubeAPIServerURL
+			}
+			if kubeAPIServerHash != "" {
+				manifestContent.KubeAPIServer.Hash = kubeAPIServerHash
+			}
+			if kubeControllerManagerURL != "" {
+				manifestContent.KubeControllerManager.URL = kubeControllerManagerURL
+			}
+			if kubeControllerManagerHash != "" {
+				manifestContent.KubeControllerManager.Hash = kubeControllerManagerHash
+			}
+			if kubeSchedulerURL != "" {
+				manifestContent.KubeScheduler.URL = kubeSchedulerURL
+			}
+			if kubeSchedulerHash != "" {
+				manifestContent.KubeScheduler.Hash = kubeSchedulerHash
+			}
+			if kubeletURL != "" {
+				manifestContent.Kubelet.URL = kubeletURL
+			}
+			if kubeletHash != "" {
+				manifestContent.Kubelet.Hash = kubeletHash
+			}
+			if kubeProxyURL != "" {
+				manifestContent.KubeProxy.URL = kubeProxyURL
+			}
+			if kubeProxyHash != "" {
+				manifestContent.KubeProxy.Hash = kubeProxyHash
+			}
 			signer, err := crypto.SignerFromFile(certFile, keyFile)
 			if err != nil {
 				return err
