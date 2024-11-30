@@ -1,0 +1,22 @@
+{
+  "kube-apiserver": {
+    "url": "https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-apiserver",
+    "hash": "346cceb8d67c0b3efae3575d5addfd2a1086e8023013d1e6472e370b8951639d"
+  },
+  "kube-controller-manager": {
+    "url": "https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-controller-manager",
+    "hash": "b1e16bceee2bc76a6f973784ca611d8e972aa7ed213ae75255097a60f85752fb"
+  },
+  "kube-scheduler": {
+    "url": "https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-scheduler",
+    "hash": "c08a2c34f8c4235d5a4e8e99586bb6d7ccb90dc3f88d7f5f4573b0b939624e9c"
+  },
+  "kubelet": {
+    "url": "https://dl.k8s.io/v1.31.2/bin/linux/amd64/kubelet",
+    "hash": "b0de6290267bbb4f6bcd9c4d50bb331e335f8dc47653644ae278844bb04c1fb6"
+  },
+  "kube-proxy": {
+    "url": "https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-proxy",
+    "hash": "4b6e5718b60f97868b691334f5909fee8a2aaffeb2eb2e5edceede6b4a8f8d76"
+  }
+}
