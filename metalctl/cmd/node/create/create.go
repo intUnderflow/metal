@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/intunderflow/metal/config"
 	"github.com/intunderflow/metal/crypto"
+	"github.com/intunderflow/metal/metalctl/lib/manifest"
 	"github.com/intunderflow/metal/mtls"
 	"github.com/intunderflow/metal/net"
 	"github.com/spf13/cobra"
@@ -28,6 +29,7 @@ var kubeletURL string
 var kubeletHash string
 var kubeProxyURL string
 var kubeProxyHash string
+var manifestPath string
 var mtlsCertFilePath string
 var mtlsKeyFilePath string
 
@@ -37,6 +39,7 @@ func Cmd() *cobra.Command {
 		Short: "create a node on a federation and sign it",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var err error
 			id := args[0]
 			if id == "" {
 				return errors.New("Node ID (first argument) is required")
@@ -50,6 +53,23 @@ func Cmd() *cobra.Command {
 			if keyFile == "" {
 				return errors.New("key-file is required")
 			}
+			manifestContent := &manifest.Manifest{}
+			if manifestPath != "" {
+				manifestContent, err = manifest.FromFile(manifestPath)
+				if err != nil {
+					return err
+				}
+			}
+			manifestContent.KubeAPIServer.URL = kubeAPIServerURL
+			manifestContent.KubeAPIServer.Hash = kubeAPIServerHash
+			manifestContent.KubeControllerManager.URL = kubeControllerManagerURL
+			manifestContent.KubeControllerManager.Hash = kubeControllerManagerHash
+			manifestContent.KubeScheduler.URL = kubeSchedulerURL
+			manifestContent.KubeScheduler.Hash = kubeSchedulerHash
+			manifestContent.Kubelet.URL = kubeletURL
+			manifestContent.Kubelet.Hash = kubeletHash
+			manifestContent.KubeProxy.URL = kubeProxyURL
+			manifestContent.KubeProxy.Hash = kubeProxyHash
 			signer, err := crypto.SignerFromFile(certFile, keyFile)
 			if err != nil {
 				return err
@@ -61,16 +81,16 @@ func Cmd() *cobra.Command {
 				EtcdMember:                            etcdMember,
 				KubernetesControlPlane:                kubernetesControlPlane,
 				KubernetesWorker:                      kubernetesWorker,
-				KubernetesAPIServerBinary:             kubeAPIServerURL,
-				KubernetesAPIServerBinaryHash:         kubeAPIServerHash,
-				KubernetesControllerManagerBinary:     kubeControllerManagerURL,
-				KubernetesControllerManagerBinaryHash: kubeControllerManagerHash,
-				KubernetesSchedulerBinary:             kubeSchedulerURL,
-				KubernetesSchedulerBinaryHash:         kubeSchedulerHash,
-				KubernetesKubeletBinary:               kubeletURL,
-				KubernetesKubeletBinaryHash:           kubeletHash,
-				KubernetesProxyBinary:                 kubeProxyURL,
-				KubernetesProxyBinaryHash:             kubeProxyHash,
+				KubernetesAPIServerBinary:             manifestContent.KubeAPIServer.URL,
+				KubernetesAPIServerBinaryHash:         manifestContent.KubeAPIServer.Hash,
+				KubernetesControllerManagerBinary:     manifestContent.KubeControllerManager.URL,
+				KubernetesControllerManagerBinaryHash: manifestContent.KubeControllerManager.Hash,
+				KubernetesSchedulerBinary:             manifestContent.KubeScheduler.URL,
+				KubernetesSchedulerBinaryHash:         manifestContent.KubeScheduler.Hash,
+				KubernetesKubeletBinary:               manifestContent.Kubelet.URL,
+				KubernetesKubeletBinaryHash:           manifestContent.Kubelet.Hash,
+				KubernetesProxyBinary:                 manifestContent.KubeProxy.URL,
+				KubernetesProxyBinaryHash:             manifestContent.KubeProxy.Hash,
 			}
 			signature, err := signer.Sign(nodeGoalState)
 			if err != nil {
@@ -108,6 +128,7 @@ func Cmd() *cobra.Command {
 	create.PersistentFlags().StringVar(&kubeletHash, "kubelet-hash", "", "Expected sha256 hash of kubelet binary")
 	create.PersistentFlags().StringVar(&kubeProxyURL, "kube-proxy-url", "", "URL of kube-proxy binary")
 	create.PersistentFlags().StringVar(&kubeProxyHash, "kube-proxy-hash", "", "Expected sha256 hash of kube-proxy binary")
+	create.PersistentFlags().StringVar(&manifestPath, "manifest-path", "", "Path to manifest of Kubernetes binaries and hashes")
 	create.PersistentFlags().StringVar(&mtlsCertFilePath, "mtls-cert-file-path", "", "Mutual TLS Certificate File Path")
 	create.PersistentFlags().StringVar(&mtlsKeyFilePath, "mtls-key-file-path", "", "Mutual TLS Key File Path")
 	return create
