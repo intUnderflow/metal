@@ -10,6 +10,9 @@
         upstream
         fallthrough in-addr.arpa ip6.arpa
     }
+    hosts {
+        fallthrough
+    }
     forward . /etc/resolv.conf
     cache 30
     loop
