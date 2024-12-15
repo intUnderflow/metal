@@ -1,10 +1,14 @@
-.:{$PORT} {
+cluster.local:{$PORT} {
+    errors
     kubernetes {
         endpoint {$K8S_ENDPOINT}
         tls {$TLS_CERT} {$TLS_KEY} {$TLS_CA}
         kubeconfig {$KUBECONFIG}
         pods verified
     }
+}
+
+.:{$PORT} {
     errors
     forward . /etc/resolv.conf
 }
