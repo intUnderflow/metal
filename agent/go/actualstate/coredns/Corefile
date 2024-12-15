@@ -7,8 +7,7 @@
         tls {$TLS_CERT} {$TLS_KEY} {$TLS_CA}
         kubeconfig {$KUBECONFIG}
         pods verified
-        upstream
-        fallthrough in-addr.arpa ip6.arpa
+        fallthrough
     }
     hosts {
         fallthrough
