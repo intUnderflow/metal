@@ -1,14 +1,18 @@
-cluster.local:{$PORT} {
+.:{$PORT} {
+    log
     errors
-    kubernetes {
+    health
+    kubernetes cluster.local in-addr.arpa ip6.arpa {
         endpoint {$K8S_ENDPOINT}
         tls {$TLS_CERT} {$TLS_KEY} {$TLS_CA}
         kubeconfig {$KUBECONFIG}
         pods verified
+        upstream
+        fallthrough in-addr.arpa ip6.arpa
     }
-}
-
-.:{$PORT} {
-    errors
     forward . /etc/resolv.conf
+    cache 30
+    loop
+    reload
+    loadbalancer
 }
