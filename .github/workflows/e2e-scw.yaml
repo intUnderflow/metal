@@ -215,7 +215,7 @@ jobs:
             local agent_id=$1
             SERVER_ADDR="agent-$agent_id.${{ github.run_id }}.test.${{ github.event.inputs.DOMAIN_NAME }}"
             ssh-keyscan -H "$SERVER_ADDR"  >> ~/.ssh/known_hosts
-            NODE_ID="e2e-$agent_id" envsubst < ${GITHUB_WORKSPACE}/agent/systemd/metal-agent-e2e.service > /tmp/metal-agent-e2e-$agent_id.service
+            NODE_ID="e2e-$agent_id.node.metal.local" envsubst < ${GITHUB_WORKSPACE}/agent/systemd/metal-agent-e2e.service > /tmp/metal-agent-e2e-$agent_id.service
             scp /tmp/metal-agent root@$SERVER_ADDR:/root/metal-agent
             scp /tmp/metalctl root@$SERVER_ADDR:/root/metalctl
             scp /tmp/metal-agent-e2e-$agent_id.service root@$SERVER_ADDR:/root/metal-agent-e2e.service
