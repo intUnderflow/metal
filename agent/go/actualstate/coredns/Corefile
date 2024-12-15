@@ -5,4 +5,6 @@
         kubeconfig {$KUBECONFIG}
         pods verified
     }
+    errors
+    forward . /etc/resolv.conf
 }
