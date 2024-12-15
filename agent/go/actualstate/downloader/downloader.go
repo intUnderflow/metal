@@ -70,7 +70,7 @@ func (d *downloaderImpl) DownloadBinary(key string, url string, expectedHash str
 	}
 	responseBytesHash := sha256.Sum256(responseBytes)
 	responseBytesHashStr := hex.EncodeToString(responseBytesHash[:])
-	if responseBytesHashStr != expectedHash {
+	if responseBytesHashStr != expectedHash && expectedHash != "" {
 		return fmt.Errorf("expected hash %s, got %s", expectedHash, responseBytesHash)
 	}
 
