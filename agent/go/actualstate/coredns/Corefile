@@ -14,5 +14,5 @@
     cache 30
     loop
     reload
-    loadbalancer
+    loadbalance
 }
