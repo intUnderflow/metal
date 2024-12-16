@@ -366,6 +366,9 @@ func (p *pkiImpl) IssueKubeNodeCertificate(nodeName string, publicKey crypto.Pub
 				"system:nodes",
 			},
 		},
+		DNSNames: []string{
+			fmt.Sprintf("%s.node.metal.local", nodeName),
+		},
 		NotBefore:   time.Now(),
 		NotAfter:    time.Now().AddDate(10, 0, 0),
 		IsCA:        false,
