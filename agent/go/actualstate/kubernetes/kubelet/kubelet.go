@@ -311,7 +311,7 @@ func toKubeletLaunchScript(
 	args["config"] = ""
 	args["kubeconfig"] = kubeConfigFile
 	args["config"] = kubeletConfigPath
-	args["hostname-override"] = spec.Name
+	args["hostname-override"] = spec.Name + ".node.metal.local"
 	var argStrings []string
 	for key, value := range args {
 		argStrings = append(argStrings, fmt.Sprintf("--%s=%s", key, value))
