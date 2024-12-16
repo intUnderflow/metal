@@ -361,7 +361,7 @@ func (p *pkiImpl) IssueKubeNodeCertificate(nodeName string, publicKey crypto.Pub
 		SerialNumber: sn,
 		Subject: pkix.Name{
 			SerialNumber: sn.String(),
-			CommonName:   fmt.Sprintf("system:node:%s", nodeName),
+			CommonName:   fmt.Sprintf("system:node:%s.node.metal.local", nodeName),
 			Organization: []string{
 				"system:nodes",
 			},
