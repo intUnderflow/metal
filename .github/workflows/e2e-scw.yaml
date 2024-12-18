@@ -94,12 +94,6 @@ jobs:
       - name: Download kubectl
         run: |
           wget -q https://dl.k8s.io/v1.31.2/bin/linux/amd64/kubectl -O kubectl
-      - name: Download CoreDNS
-        run: |
-          wget -q https://github.com/coredns/coredns/releases/download/v1.11.4/coredns_1.11.4_linux_amd64.tgz -O coredns.tgz
-          mkdir ./corednsdir
-          tar Cxzvf ./corednsdir ./coredns.tgz
-          mv ./corednsdir/coredns ./coredns
       - name: Build software
         run: |
           cd ${GITHUB_WORKSPACE}/agent/go && GOOS=linux GOARCH=amd64 go build -o /tmp/metal-agent main.go
