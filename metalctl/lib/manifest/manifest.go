@@ -6,6 +6,7 @@ import (
 )
 
 type Manifest struct {
+	Etcd                  Entry `json:"etcd"`
 	KubeAPIServer         Entry `json:"kube-apiserver"`
 	KubeControllerManager Entry `json:"kube-controller-manager"`
 	KubeScheduler         Entry `json:"kube-scheduler"`

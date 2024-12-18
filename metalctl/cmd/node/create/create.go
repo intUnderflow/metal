@@ -19,6 +19,8 @@ var wireguardMeshMember bool
 var etcdMember bool
 var kubernetesControlPlane bool
 var kubernetesWorker bool
+var etcdURL string
+var etcdHash string
 var kubeAPIServerURL string
 var kubeAPIServerHash string
 var kubeControllerManagerURL string
@@ -59,6 +61,12 @@ func Cmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
+			}
+			if etcdURL != "" {
+				manifestContent.Etcd.URL = etcdURL
+			}
+			if etcdHash != "" {
+				manifestContent.Etcd.Hash = etcdHash
 			}
 			if kubeAPIServerURL != "" {
 				manifestContent.KubeAPIServer.URL = kubeAPIServerURL
@@ -101,6 +109,8 @@ func Cmd() *cobra.Command {
 				EtcdMember:                            etcdMember,
 				KubernetesControlPlane:                kubernetesControlPlane,
 				KubernetesWorker:                      kubernetesWorker,
+				EtcdBinary:                            manifestContent.Etcd.URL,
+				EtcdBinaryHash:                        manifestContent.Etcd.Hash,
 				KubernetesAPIServerBinary:             manifestContent.KubeAPIServer.URL,
 				KubernetesAPIServerBinaryHash:         manifestContent.KubeAPIServer.Hash,
 				KubernetesControllerManagerBinary:     manifestContent.KubeControllerManager.URL,
@@ -138,6 +148,8 @@ func Cmd() *cobra.Command {
 	create.PersistentFlags().BoolVar(&etcdMember, "etcd-member", false, "Give node etcd membership")
 	create.PersistentFlags().BoolVar(&kubernetesControlPlane, "kubernetes-control-plane", false, "Give node kubernetes control plane membership")
 	create.PersistentFlags().BoolVar(&kubernetesWorker, "kubernetes-worker", false, "Give node kubernetes worker status")
+	create.PersistentFlags().StringVar(&etcdURL, "etcd-url", "", "Etcd server URL")
+	create.PersistentFlags().StringVar(&etcdHash, "etcd-hash", "", "Etcd server hash")
 	create.PersistentFlags().StringVar(&kubeAPIServerURL, "kube-apiserver-url", "", "URL of kube-apiserver binary to download")
 	create.PersistentFlags().StringVar(&kubeAPIServerHash, "kube-apiserver-hash", "", "Expected sha256 hash of kube-apiserver binary")
 	create.PersistentFlags().StringVar(&kubeControllerManagerURL, "kube-controller-manager-url", "", "URL of kube-controller-manager binary")

@@ -1,4 +1,8 @@
 {
+  "etcd": {
+    "url": "https://github.com/intUnderflow/metal-artifacts/raw/refs/heads/main/etcd-v3.5.17-linux-amd64/etcd",
+    "hash": "17d19f93c2919f9f40f650521a56417508770ea1a658e62ef80919286a7ee79d"
+  },
   "kube-apiserver": {
     "url": "https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-apiserver",
     "hash": "346cceb8d67c0b3efae3575d5addfd2a1086e8023013d1e6472e370b8951639d"

@@ -24,6 +24,12 @@ type NodeGoalState struct {
 	// If this boolean is true then the node will be a Kubernetes worker
 	KubernetesWorker bool `json:"kubernetes_worker"`
 
+	// The URL of the etcd binary to use (maps to etcd)
+	EtcdBinary string `json:"etcd_binary"`
+
+	// The hash of the content expected at the URL of the etcd binary (if empty no hash check is done)
+	EtcdBinaryHash string `json:"etcd_binary_hash"`
+
 	// The URL of the Kubernetes API server binary to use (maps to kube-apiserver)
 	KubernetesAPIServerBinary string `json:"kubernetes_api_server_binary"`
 
