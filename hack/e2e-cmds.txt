@@ -7,6 +7,7 @@
 /root/metalctl auth create-kubeconfig --ca-path /root/k8s-ca.pem --server-address "https://e2e-3.node.metal.local:61100" --certificate-path /root/kube-superadmin.pem --private-key-path /root/kube-superadmin.key --output-path /root/kube-superadmin.kubeconfig
 /root/kubectl cluster-info --kubeconfig /root/kube-superadmin.kubeconfig
 export KUBECONFIG=/root/kube-superadmin.kubeconfig
+export PATH=$PATH:/root
 
 /root/kubectl --kubeconfig /root/kube-superadmin.kubeconfig create deployment my-dep --image=nginx
 /root/kubectl --kubeconfig /root/kube-superadmin.kubeconfig get events
