@@ -225,7 +225,6 @@ jobs:
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcdctl root@$SERVER_ADDR:/root/etcdctl
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcd.service root@$SERVER_ADDR:/root/etcd.service
             scp kubectl root@$SERVER_ADDR:/root/kubectl
-            scp coredns root@$SERVER_ADDR:/root/coredns
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kube-apiserver.service root@$SERVER_ADDR:/root/kube-apiserver.service
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kube-controller-manager.service root@$SERVER_ADDR:/root/kube-controller-manager.service
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kube-scheduler.service root@$SERVER_ADDR:/root/kube-scheduler.service    
@@ -252,7 +251,6 @@ jobs:
             ssh root@$SERVER_ADDR 'touch /root/coredns.sh'
             ssh root@$SERVER_ADDR 'touch /root/kube-proxy.sh'
             ssh root@$SERVER_ADDR 'chmod +x /root/kubectl'
-            ssh root@$SERVER_ADDR 'chmod +x /root/coredns'
             ssh root@$SERVER_ADDR 'mkdir /root/downloads'
             
             ssh root@$SERVER_ADDR 'wget -q https://github.com/containerd/containerd/releases/download/v2.0.0/containerd-2.0.0-linux-amd64.tar.gz -O /root/containerd.tar.gz'
@@ -320,7 +318,7 @@ jobs:
           KUBERNETES_KUBELET_KUBELET_CONFIG_FILE: "/root/kubelet-conf.yaml"
           KUBERNETES_KUBELET_CERT_FILE: "/root/k8s-kubelet-cert.pem"
           KUBERNETES_KUBELET_KEY_FILE: "/root/k8s-kubelet-cert.key"
-          COREDNS_PATH: "/root/coredns"
+          COREDNS_PATH: "/root/downloads/coredns"
           COREDNS_LAUNCH_SCRIPT_PATH: "/root/coredns.sh"
           COREDNS_SYSTEMD_NAME: "coredns"
           COREDNS_COREFILE: "/root/coredns-corefile"

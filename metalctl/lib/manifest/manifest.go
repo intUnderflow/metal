@@ -12,6 +12,7 @@ type Manifest struct {
 	KubeScheduler         Entry `json:"kube-scheduler"`
 	Kubelet               Entry `json:"kubelet"`
 	KubeProxy             Entry `json:"kube-proxy"`
+	CoreDNS               Entry `json:"coredns"`
 }
 
 type Entry struct {

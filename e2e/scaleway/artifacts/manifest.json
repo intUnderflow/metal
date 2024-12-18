@@ -22,5 +22,9 @@
   "kube-proxy": {
     "url": "https://dl.k8s.io/v1.31.2/bin/linux/amd64/kube-proxy",
     "hash": "4b6e5718b60f97868b691334f5909fee8a2aaffeb2eb2e5edceede6b4a8f8d76"
+  },
+  "coredns": {
+    "url": "https://github.com/intUnderflow/metal-artifacts/raw/refs/heads/main/coredns_1.12.0_linux_amd64",
+    "hash": "b55584561a7260c1035f130183993dd44c4c1a422e4e960c8efd6febe5388321"
   }
 }

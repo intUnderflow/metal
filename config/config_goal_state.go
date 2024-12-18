@@ -59,6 +59,12 @@ type NodeGoalState struct {
 
 	// The hash of the content expected at the URL of the Kubernetes proxy binary (if empty no hash check is done)
 	KubernetesProxyBinaryHash string `json:"kubernetes_kube_proxy_binary_hash"`
+
+	// The url of the CoreDNS binary to use (maps to coredns)
+	CoreDNSBinary string `json:"coredns_binary"`
+
+	// The hash of the content expected at the URL of the CoreDNS binary (if empty no hash check is done)
+	CoreDNSBinaryHash string `json:"coredns_binary_hash"`
 }
 
 func (n *NodeGoalState) ContentsForSignature() ([]byte, error) {

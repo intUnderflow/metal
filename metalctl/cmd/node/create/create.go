@@ -31,6 +31,8 @@ var kubeletURL string
 var kubeletHash string
 var kubeProxyURL string
 var kubeProxyHash string
+var coreDNSURL string
+var coreDNSHash string
 var manifestPath string
 var mtlsCertFilePath string
 var mtlsKeyFilePath string
@@ -98,6 +100,12 @@ func Cmd() *cobra.Command {
 			if kubeProxyHash != "" {
 				manifestContent.KubeProxy.Hash = kubeProxyHash
 			}
+			if coreDNSURL != "" {
+				manifestContent.CoreDNS.URL = coreDNSURL
+			}
+			if coreDNSHash != "" {
+				manifestContent.CoreDNS.Hash = coreDNSHash
+			}
 			signer, err := crypto.SignerFromFile(certFile, keyFile)
 			if err != nil {
 				return err
@@ -121,6 +129,8 @@ func Cmd() *cobra.Command {
 				KubernetesKubeletBinaryHash:           manifestContent.Kubelet.Hash,
 				KubernetesProxyBinary:                 manifestContent.KubeProxy.URL,
 				KubernetesProxyBinaryHash:             manifestContent.KubeProxy.Hash,
+				CoreDNSBinary:                         manifestContent.CoreDNS.URL,
+				CoreDNSBinaryHash:                     manifestContent.CoreDNS.Hash,
 			}
 			signature, err := signer.Sign(nodeGoalState)
 			if err != nil {
@@ -160,6 +170,8 @@ func Cmd() *cobra.Command {
 	create.PersistentFlags().StringVar(&kubeletHash, "kubelet-hash", "", "Expected sha256 hash of kubelet binary")
 	create.PersistentFlags().StringVar(&kubeProxyURL, "kube-proxy-url", "", "URL of kube-proxy binary")
 	create.PersistentFlags().StringVar(&kubeProxyHash, "kube-proxy-hash", "", "Expected sha256 hash of kube-proxy binary")
+	create.PersistentFlags().StringVar(&coreDNSURL, "core-dns-url", "", "URL of CoreDNS binary")
+	create.PersistentFlags().StringVar(&coreDNSHash, "core-dns-hash", "", "Expected sha256 hash of CoreDNS binary")
 	create.PersistentFlags().StringVar(&manifestPath, "manifest-path", "", "Path to manifest of Kubernetes binaries and hashes")
 	create.PersistentFlags().StringVar(&mtlsCertFilePath, "mtls-cert-file-path", "", "Mutual TLS Certificate File Path")
 	create.PersistentFlags().StringVar(&mtlsKeyFilePath, "mtls-key-file-path", "", "Mutual TLS Key File Path")

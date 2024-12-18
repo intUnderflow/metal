@@ -140,6 +140,16 @@ func (r *Service) getRolloutsForNode(config *config.Config, node *config.Node) (
 
 	var rollouts []Rollout
 
+	if node.GoalState.CoreDNSBinary != "" && !hasBinary(node.ActualState.DownloadedBinaries, "coredns", node.GoalState.CoreDNSBinaryHash) {
+		rollouts = append(rollouts, &downloadBinary{
+			nodeID:          node.GoalState.ID,
+			key:             "coredns",
+			url:             node.GoalState.CoreDNSBinary,
+			expectedHash:    node.GoalState.CoreDNSBinaryHash,
+			downloadService: r.downloadService,
+		})
+	}
+
 	if node.GoalState.EtcdBinary != "" && !hasBinary(node.ActualState.DownloadedBinaries, "etcd", node.GoalState.EtcdBinaryHash) {
 		rollouts = append(rollouts, &downloadBinary{
 			nodeID:          node.GoalState.ID,
