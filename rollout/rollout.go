@@ -140,6 +140,16 @@ func (r *Service) getRolloutsForNode(config *config.Config, node *config.Node) (
 
 	var rollouts []Rollout
 
+	if node.GoalState.EtcdBinary != "" && !hasBinary(node.ActualState.DownloadedBinaries, "etcd", node.GoalState.EtcdBinaryHash) {
+		rollouts = append(rollouts, &downloadBinary{
+			nodeID:          node.GoalState.ID,
+			key:             "etcd",
+			url:             node.GoalState.EtcdBinary,
+			expectedHash:    node.GoalState.EtcdBinaryHash,
+			downloadService: r.downloadService,
+		})
+	}
+
 	if node.GoalState.KubernetesAPIServerBinary != "" && !hasBinary(node.ActualState.DownloadedBinaries, "kube-apiserver", node.GoalState.KubernetesAPIServerBinaryHash) {
 		rollouts = append(rollouts, &downloadBinary{
 			nodeID:          node.GoalState.ID,

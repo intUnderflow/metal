@@ -222,7 +222,6 @@ jobs:
             scp root-ca.pem root@$SERVER_ADDR:/root/root-ca.pem
             scp e2e-$agent_id.node.pem root@$SERVER_ADDR:/root/agent-e2e-cert.pem
             scp e2e-$agent_id.node.key root@$SERVER_ADDR:/root/agent-e2e-cert.key
-            scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcd root@$SERVER_ADDR:/root/etcd
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcdctl root@$SERVER_ADDR:/root/etcdctl
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/etcd.service root@$SERVER_ADDR:/root/etcd.service
             scp kubectl root@$SERVER_ADDR:/root/kubectl

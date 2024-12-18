@@ -3,7 +3,7 @@ Description=etcd service
 
 [Service]
 Type=simple
-ExecStart=/root/etcd --auto-tls --peer-auto-tls --config-file /root/etcd.conf
+ExecStart=/root/downloads/etcd --auto-tls --peer-auto-tls --config-file /root/etcd.conf
 Restart=always
 RestartSec=10s
 TimeoutStartSec=120
