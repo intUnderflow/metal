@@ -223,7 +223,6 @@ jobs:
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kube-proxy.service root@$SERVER_ADDR:/root/kube-proxy.service
             ssh root@$SERVER_ADDR 'sysctl -w net.ipv4.ip_forward=1'
             ssh root@$SERVER_ADDR 'apt update && apt install wireguard -y'
-            ssh root@$SERVER_ADDR 'touch /root/wireguard-config-e2e.conf'
             ssh root@$SERVER_ADDR 'wg genkey > /root/wireguard-key-e2e.txt'
             ssh root@$SERVER_ADDR 'wg pubkey < /root/wireguard-key-e2e.txt > /root/wireguard-key-e2e.txt.public'
             ssh root@$SERVER_ADDR 'chmod +x /root/metal-agent'
@@ -235,11 +234,6 @@ jobs:
             ssh root@$SERVER_ADDR 'cp /root/kubelet.service /etc/systemd/system/kubelet.service && systemctl daemon-reload'
             ssh root@$SERVER_ADDR 'cp /root/coredns.service /etc/systemd/system/coredns.service && systemctl daemon-reload'
             ssh root@$SERVER_ADDR 'cp /root/kube-proxy.service /etc/systemd/system/kube-proxy.service && systemctl daemon-reload'
-            ssh root@$SERVER_ADDR 'touch /root/kube-apiserver.sh'
-            ssh root@$SERVER_ADDR 'touch /root/kube-controller-manager.sh'
-            ssh root@$SERVER_ADDR 'touch /root/kube-scheduler.sh'
-            ssh root@$SERVER_ADDR 'touch /root/coredns.sh'
-            ssh root@$SERVER_ADDR 'touch /root/kube-proxy.sh'
             ssh root@$SERVER_ADDR 'mkdir /root/downloads'
             
             ssh root@$SERVER_ADDR 'wget -q https://github.com/containerd/containerd/releases/download/v2.0.0/containerd-2.0.0-linux-amd64.tar.gz -O /root/containerd.tar.gz'
