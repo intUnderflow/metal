@@ -33,7 +33,7 @@ func Cmd() *cobra.Command {
 				return err
 			}
 
-			rolloutService := rollout.NewService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+			rolloutService := rollout.NewService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 			rollouts, err := rolloutService.GetRollouts(config)
 			if err != nil {
 				return err

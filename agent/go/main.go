@@ -9,6 +9,7 @@ import (
 	"github.com/intunderflow/metal/agent/go/actualstate/downloader"
 	"github.com/intunderflow/metal/agent/go/actualstate/endpoint"
 	"github.com/intunderflow/metal/agent/go/actualstate/etcd"
+	"github.com/intunderflow/metal/agent/go/actualstate/extradata"
 	"github.com/intunderflow/metal/agent/go/actualstate/kubernetes/apiserver"
 	controller_manager "github.com/intunderflow/metal/agent/go/actualstate/kubernetes/controller-manager"
 	"github.com/intunderflow/metal/agent/go/actualstate/kubernetes/kubelet"
@@ -93,6 +94,8 @@ var (
 	kubernetesProxyConfigFile       = os.Getenv("KUBERNETES_PROXY_CONFIG_FILE")
 
 	downloaderFilePath = os.Getenv("DOWNLOADER_FILE_PATH")
+
+	extraDataFilePath = os.Getenv("EXTRA_DATA_FILE_PATH")
 
 	// Used to store the CA bundle for Kubernetes from all nodes
 	kubernetesCAFile = os.Getenv("KUBERNETES_CA_FILE_PATH")
@@ -202,8 +205,9 @@ func run() error {
 		kubernetesProxyConfigFile,
 	)
 	downloadService := downloader.NewDownloader(downloaderFilePath)
-	actualState := actualstate.NewActualState(nodeID, endpointGetter, wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService, downloadService)
-	rolloutService := rollout.NewService(wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService, downloadService)
+	extraDataService := extradata.NewExtraData(extraDataFilePath)
+	actualState := actualstate.NewActualState(nodeID, endpointGetter, wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService, downloadService, extraDataService)
+	rolloutService := rollout.NewService(wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService, downloadService, extraDataService)
 
 	requestTerminate := &atomic.Bool{}
 	terminateChannel := make(chan os.Signal, 1)

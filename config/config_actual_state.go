@@ -81,6 +81,9 @@ type NodeActualState struct {
 	// DownloadedBinaries is a map of binary names onto SHA256 hashes present on the node, it is used to determine
 	// if a binary needs to be updated
 	DownloadedBinaries map[string]string `json:"downloaded_binaries"`
+
+	// ExtraData is the ExtraData from the goal state that has been written to disk
+	ExtraData map[string]string `json:"extra_data"`
 }
 
 func (n *NodeActualState) ContentsForSignature() ([]byte, error) {
