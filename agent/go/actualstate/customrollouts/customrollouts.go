@@ -48,7 +48,7 @@ func (c *customRollouts) GetActualState(ctx context.Context) map[string]string {
 }
 
 func (c *customRollouts) executeGetActualStateCommand(ctx context.Context, command string) (string, error) {
-	cmd := exec.CommandContext(ctx, command)
+	cmd := exec.CommandContext(ctx, "/bin/bash", "-c", command)
 	if cmd.Err != nil {
 		return "", cmd.Err
 	}
@@ -62,7 +62,7 @@ func (c *customRollouts) executeGetActualStateCommand(ctx context.Context, comma
 }
 
 func (c *customRollouts) ExecuteApplyCommand(ctx context.Context, command string) error {
-	cmd := exec.CommandContext(ctx, command)
+	cmd := exec.CommandContext(ctx, "/bin/bash", "-c", command)
 	if cmd.Err != nil {
 		return cmd.Err
 	}
