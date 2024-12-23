@@ -38,6 +38,7 @@ var manifestPath string
 var mtlsCertFilePath string
 var mtlsKeyFilePath string
 var extraData string
+var customRollouts string
 
 func Cmd() *cobra.Command {
 	create := &cobra.Command{
@@ -115,6 +116,13 @@ func Cmd() *cobra.Command {
 					return err
 				}
 			}
+			customRolloutsMap := map[string]config.CustomRolloutSpec{}
+			if customRollouts != "" {
+				customRolloutsMap, err = unmarshalCustomRollouts(customRollouts)
+				if err != nil {
+					return err
+				}
+			}
 			signer, err := crypto.SignerFromFile(certFile, keyFile)
 			if err != nil {
 				return err
@@ -141,6 +149,7 @@ func Cmd() *cobra.Command {
 				CoreDNSBinary:                         manifestContent.CoreDNS.URL,
 				CoreDNSBinaryHash:                     manifestContent.CoreDNS.Hash,
 				ExtraData:                             extraDataMap,
+				CustomRolloutSpec:                     customRolloutsMap,
 			}
 			signature, err := signer.Sign(nodeGoalState)
 			if err != nil {
@@ -183,8 +192,18 @@ func Cmd() *cobra.Command {
 	create.PersistentFlags().StringVar(&coreDNSURL, "core-dns-url", "", "URL of CoreDNS binary")
 	create.PersistentFlags().StringVar(&coreDNSHash, "core-dns-hash", "", "Expected sha256 hash of CoreDNS binary")
 	create.PersistentFlags().StringVar(&extraData, "extra-data", "", "Extra data for the node")
+	create.PersistentFlags().StringVar(&customRollouts, "custom-rollouts", "", "Custom rollouts")
 	create.PersistentFlags().StringVar(&manifestPath, "manifest-path", "", "Path to manifest of Kubernetes binaries and hashes")
 	create.PersistentFlags().StringVar(&mtlsCertFilePath, "mtls-cert-file-path", "", "Mutual TLS Certificate File Path")
 	create.PersistentFlags().StringVar(&mtlsKeyFilePath, "mtls-key-file-path", "", "Mutual TLS Key File Path")
 	return create
+}
+
+func unmarshalCustomRollouts(input string) (map[string]config.CustomRolloutSpec, error) {
+	var result map[string]config.CustomRolloutSpec
+	err := json.Unmarshal([]byte(input), &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
