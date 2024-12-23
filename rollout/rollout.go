@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/intunderflow/metal/agent/go/actualstate/coredns"
+	"github.com/intunderflow/metal/agent/go/actualstate/customrollouts"
 	"github.com/intunderflow/metal/agent/go/actualstate/dns"
 	"github.com/intunderflow/metal/agent/go/actualstate/downloader"
 	"github.com/intunderflow/metal/agent/go/actualstate/etcd"
@@ -56,7 +57,7 @@ type Priority struct {
 	Minor int
 }
 
-func NewService(wireguardService wireguard.Wireguard, etcdService etcd.Etcd, kubernetesAPIServerService apiserver.ApiServer, kubernetesControllerManagerService controller_manager.ControllerManager, kubernetesSchedulerService scheduler.Scheduler, dnsService dns.DNS, pkiService pki.PKI, kubeletService kubelet.Kubelet, coreDNSService coredns.CoreDNS, kubernetesProxyService proxy.Proxy, downloadService downloader.Downloader, extraDataService extradata.ExtraData) *Service {
+func NewService(wireguardService wireguard.Wireguard, etcdService etcd.Etcd, kubernetesAPIServerService apiserver.ApiServer, kubernetesControllerManagerService controller_manager.ControllerManager, kubernetesSchedulerService scheduler.Scheduler, dnsService dns.DNS, pkiService pki.PKI, kubeletService kubelet.Kubelet, coreDNSService coredns.CoreDNS, kubernetesProxyService proxy.Proxy, downloadService downloader.Downloader, extraDataService extradata.ExtraData, customRolloutService customrollouts.CustomRollouts) *Service {
 	return &Service{
 		wireguardService:                   wireguardService,
 		etcdService:                        etcdService,
@@ -70,6 +71,7 @@ func NewService(wireguardService wireguard.Wireguard, etcdService etcd.Etcd, kub
 		kubernetesProxyService:             kubernetesProxyService,
 		downloadService:                    downloadService,
 		extraDataService:                   extraDataService,
+		customRolloutService:               customRolloutService,
 	}
 }
 
@@ -86,6 +88,7 @@ type Service struct {
 	kubernetesProxyService             proxy.Proxy
 	downloadService                    downloader.Downloader
 	extraDataService                   extradata.ExtraData
+	customRolloutService               customrollouts.CustomRollouts
 }
 
 func (r *Service) GetRollouts(config *config.Config) ([]Rollout, error) {
@@ -142,6 +145,14 @@ func (r *Service) getRolloutsForNode(config *config.Config, node *config.Node) (
 	}
 
 	var rollouts []Rollout
+
+	customRollouts, err := r.getCustomRolloutsForNode(config, node)
+	if err != nil {
+		return nil, err
+	}
+	if len(customRollouts) > 0 {
+		rollouts = append(rollouts, customRollouts...)
+	}
 
 	if !mapsEqual(node.GoalState.ExtraData, node.ActualState.ExtraData) {
 		rollouts = append(rollouts, &extraDataApply{
@@ -487,6 +498,26 @@ func (r *Service) getRolloutsForNode(config *config.Config, node *config.Node) (
 				nodeID:       node.GoalState.ID,
 				specToApply:  nil,
 				proxyService: r.kubernetesProxyService,
+			})
+		}
+	}
+
+	return rollouts, nil
+}
+
+func (r *Service) getCustomRolloutsForNode(_ *config.Config, node *config.Node) ([]Rollout, error) {
+	if node.GoalState == nil || node.ActualState == nil {
+		return nil, nil
+	}
+
+	var rollouts []Rollout
+	for id, entry := range node.GoalState.CustomRolloutSpec {
+		actualState, ok := node.ActualState.CustomRolloutState[id]
+		if !ok || entry.GoalState != actualState {
+			rollouts = append(rollouts, &customRollout{
+				nodeID:               node.GoalState.ID,
+				customRollout:        entry,
+				customRolloutService: r.customRolloutService,
 			})
 		}
 	}

@@ -68,6 +68,9 @@ type NodeGoalState struct {
 
 	// Extra data exposed by the agent through a file
 	ExtraData map[string]string `json:"extra_data"`
+
+	// CustomRolloutSpec is the custom rollouts configured for the node
+	CustomRolloutSpec map[string]CustomRolloutSpec `json:"custom_rollout_spec"`
 }
 
 func (n *NodeGoalState) ContentsForSignature() ([]byte, error) {

@@ -3,6 +3,7 @@ package actualstate
 import (
 	"context"
 	"github.com/intunderflow/metal/agent/go/actualstate/coredns"
+	"github.com/intunderflow/metal/agent/go/actualstate/customrollouts"
 	"github.com/intunderflow/metal/agent/go/actualstate/dns"
 	"github.com/intunderflow/metal/agent/go/actualstate/downloader"
 	"github.com/intunderflow/metal/agent/go/actualstate/endpoint"
@@ -23,6 +24,7 @@ import (
 type ActualState interface {
 	GetActualState(context.Context) (*config.NodeActualState, error)
 	SetReconciliationStatus(error)
+	InformGoalState(*config.NodeGoalState)
 }
 
 func NewActualState(
@@ -40,6 +42,7 @@ func NewActualState(
 	kubernetesProxyService proxy.Proxy,
 	downloadService downloader.Downloader,
 	extraDataService extradata.ExtraData,
+	customRolloutsService customrollouts.CustomRollouts,
 ) ActualState {
 	return &actualStateImpl{
 		mutex:                              &sync.RWMutex{},
@@ -58,6 +61,7 @@ func NewActualState(
 		kubernetesProxyService:             kubernetesProxyService,
 		downloadService:                    downloadService,
 		extraDataService:                   extraDataService,
+		customRolloutsService:              customRolloutsService,
 	}
 }
 
@@ -78,6 +82,7 @@ type actualStateImpl struct {
 	kubernetesProxyService             proxy.Proxy
 	downloadService                    downloader.Downloader
 	extraDataService                   extradata.ExtraData
+	customRolloutsService              customrollouts.CustomRollouts
 }
 
 func (a *actualStateImpl) GetActualState(ctx context.Context) (*config.NodeActualState, error) {
@@ -132,6 +137,7 @@ func (a *actualStateImpl) GetActualState(ctx context.Context) (*config.NodeActua
 		KubernetesProxyStatus:                      deriveServiceHealth(a.kubernetesProxyService.CheckHealthy(ctx)),
 		DownloadedBinaries:                         a.downloadService.GetBinariesActualState(),
 		ExtraData:                                  a.extraDataService.GetExtraData(),
+		CustomRolloutState:                         a.customRolloutsService.GetActualState(ctx),
 	}, nil
 }
 
@@ -144,6 +150,10 @@ func (a *actualStateImpl) SetReconciliationStatus(reconciliationStatus error) {
 	} else {
 		a.reconciliationStatus = reconciliationStatus.Error()
 	}
+}
+
+func (a *actualStateImpl) InformGoalState(goalState *config.NodeGoalState) {
+	a.customRolloutsService.SetKnownCustomRollouts(goalState.CustomRolloutSpec)
 }
 
 func deriveServiceHealth(err error) string {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/intunderflow/metal/agent/go/actualstate"
 	"github.com/intunderflow/metal/agent/go/actualstate/coredns"
+	"github.com/intunderflow/metal/agent/go/actualstate/customrollouts"
 	"github.com/intunderflow/metal/agent/go/actualstate/dns"
 	"github.com/intunderflow/metal/agent/go/actualstate/downloader"
 	"github.com/intunderflow/metal/agent/go/actualstate/endpoint"
@@ -206,8 +207,9 @@ func run() error {
 	)
 	downloadService := downloader.NewDownloader(downloaderFilePath)
 	extraDataService := extradata.NewExtraData(extraDataFilePath)
-	actualState := actualstate.NewActualState(nodeID, endpointGetter, wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService, downloadService, extraDataService)
-	rolloutService := rollout.NewService(wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService, downloadService, extraDataService)
+	customRolloutsService := customrollouts.NewCustomRollouts()
+	actualState := actualstate.NewActualState(nodeID, endpointGetter, wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService, downloadService, extraDataService, customRolloutsService)
+	rolloutService := rollout.NewService(wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService, downloadService, extraDataService, customRolloutsService)
 
 	requestTerminate := &atomic.Bool{}
 	terminateChannel := make(chan os.Signal, 1)
@@ -253,6 +255,9 @@ func runPeriodic(ctx context.Context, wrap *wrapper.ConfigWrapper, broker net.Br
 	if wrap.Config.Nodes[newActualState.ID] != nil {
 		wrap.Config.Nodes[newActualState.ID].ActualState = newActualState
 		wrap.Config.Nodes[newActualState.ID].ActualStateSignature = actualStateSignature
+		if wrap.Config.Nodes[newActualState.ID].GoalState != nil {
+			actualState.InformGoalState(wrap.Config.Nodes[newActualState.ID].GoalState)
+		}
 	} else {
 		fmt.Printf("warning: not publishing ActualState for node because node has no GoalState, id %s\n", newActualState.ID)
 	}
