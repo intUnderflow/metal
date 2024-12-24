@@ -10,7 +10,7 @@ import (
 
 type CustomRollouts interface {
 	SetKnownCustomRollouts(map[string]config.CustomRolloutSpec)
-	ExecuteApplyCommand(context.Context, string) error
+	ExecuteApplyCommand(context.Context, []string) error
 	GetActualState(context.Context) map[string]string
 }
 
@@ -47,8 +47,8 @@ func (c *customRollouts) GetActualState(ctx context.Context) map[string]string {
 	return results
 }
 
-func (c *customRollouts) executeGetActualStateCommand(ctx context.Context, command string) (string, error) {
-	cmd := exec.CommandContext(ctx, "/bin/bash", "-c", command)
+func (c *customRollouts) executeGetActualStateCommand(ctx context.Context, command []string) (string, error) {
+	cmd := exec.CommandContext(ctx, command[0], command[1:]...)
 	if cmd.Err != nil {
 		return "", cmd.Err
 	}
@@ -61,8 +61,8 @@ func (c *customRollouts) executeGetActualStateCommand(ctx context.Context, comma
 	return string(output), nil
 }
 
-func (c *customRollouts) ExecuteApplyCommand(ctx context.Context, command string) error {
-	cmd := exec.CommandContext(ctx, "/bin/bash", "-c", command)
+func (c *customRollouts) ExecuteApplyCommand(ctx context.Context, command []string) error {
+	cmd := exec.CommandContext(ctx, command[0], command[1:]...)
 	if cmd.Err != nil {
 		return cmd.Err
 	}
