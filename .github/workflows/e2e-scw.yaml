@@ -345,7 +345,7 @@ jobs:
       - name: Verify cluster rollouts complete
         run: |
           check_command() {
-            output=$(/tmp/metalctl rollouts list --broker "$BROKER" --mtls-cert-file-path admin.pem --mtls-key-file-path admin.key)
+            output=$(/tmp/metalctl rollouts list --broker "$BROKER" --mtls-cert-file-path admin.pem --mtls-key-file-path admin.key --detailed)
             echo "$output"
             if echo "$output" | grep -q -- "-0 rollouts"; then
               echo "Success!"
