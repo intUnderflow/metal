@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/intunderflow/metal/agent/go/actualstate/customrollouts"
 	"github.com/intunderflow/metal/config"
+	"strings"
 )
 
 type customRollout struct {
@@ -32,5 +33,5 @@ func (c *customRollout) BasicDisplayTextForHumans() string {
 }
 
 func (c *customRollout) DetailedDisplayTextForHumans() string {
-	return "Apply " + c.customRollout.ApplyCommand
+	return "Apply " + strings.Join(c.customRollout.ApplyCommand, " ")
 }
