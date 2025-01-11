@@ -364,6 +364,7 @@ func (p *pkiImpl) IssueKubeNodeCertificate(nodeName string, publicKey crypto.Pub
 			CommonName:   fmt.Sprintf("system:node:%s.node.metal.local", nodeName),
 			Organization: []string{
 				"system:nodes",
+				"system:node-proxier",
 			},
 		},
 		DNSNames: []string{
