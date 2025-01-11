@@ -27,6 +27,7 @@ type PKI interface {
 	IssueKubeSchedulerCertificate(nodeName string, publicKey crypto.PublicKey) ([]byte, error)
 	IssueSuperAdminCertificate(commonName string, publicKey crypto.PublicKey) ([]byte, error)
 	IssueKubeNodeCertificate(nodeName string, publicKey crypto.PublicKey) ([]byte, error)
+	IssueKubeProxyCertificate(nodeName string, publicKey crypto.PublicKey) ([]byte, error)
 }
 
 func NewPKI(caPath string, nameConstraint string) (PKI, error) {
@@ -364,6 +365,35 @@ func (p *pkiImpl) IssueKubeNodeCertificate(nodeName string, publicKey crypto.Pub
 			CommonName:   fmt.Sprintf("system:node:%s.node.metal.local", nodeName),
 			Organization: []string{
 				"system:nodes",
+			},
+		},
+		DNSNames: []string{
+			fmt.Sprintf("%s.node.metal.local", nodeName),
+		},
+		NotBefore:   time.Now(),
+		NotAfter:    time.Now().AddDate(10, 0, 0),
+		IsCA:        false,
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageDataEncipherment,
+		Issuer:      p.ca.Subject,
+	}
+
+	certBytes, err := x509.CreateCertificate(rand.Reader, cert, p.ca, publicKey, p.privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return certBytes, nil
+}
+
+func (p *pkiImpl) IssueKubeProxyCertificate(nodeName string, publicKey crypto.PublicKey) ([]byte, error) {
+	sn := generateSerialNumber()
+	cert := &x509.Certificate{
+		SerialNumber: sn,
+		Subject: pkix.Name{
+			SerialNumber: sn.String(),
+			CommonName:   fmt.Sprintf("system:kube-proxy"),
+			Organization: []string{
 				"system:node-proxier",
 			},
 		},

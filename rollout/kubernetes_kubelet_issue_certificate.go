@@ -31,12 +31,18 @@ func (k *kubernetesKubeletIssueCertificate) Apply(_ context.Context) error {
 		return err
 	}
 
-	cert, err := k.pkiService.IssueKubeNodeCertificate(k.forNodeID, cryptoPublic)
+	kubeletCert, err := k.pkiService.IssueKubeNodeCertificate(k.forNodeID, cryptoPublic)
 	if err != nil {
 		return err
 	}
 
-	k.kubeletService.AddCertificateForFulfillment(k.forNodeID, base64.StdEncoding.EncodeToString(cert))
+	kubeProxyCert, err := k.pkiService.IssueKubeProxyCertificate(k.forNodeID, cryptoPublic)
+	if err != nil {
+		return err
+	}
+
+	k.kubeletService.AddCertificateForFulfillment(k.forNodeID, base64.StdEncoding.EncodeToString(kubeletCert))
+	k.kubeletService.AddCertificateForFulfillment(k.forNodeID+":kube-proxy", base64.StdEncoding.EncodeToString(kubeProxyCert))
 	return nil
 }
 
