@@ -17,7 +17,7 @@ func (k *kubernetesKubeletInstallCertificate) NodeID() string {
 }
 
 func (k *kubernetesKubeletInstallCertificate) Apply(_ context.Context) error {
-	return k.kubeletService.FulfillCertificate(k.certificate)
+	return k.kubeletService.FulfillCertificate(k.certificate, "kubelet")
 }
 
 func (k *kubernetesKubeletInstallCertificate) Priority() Priority {

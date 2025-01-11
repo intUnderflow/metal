@@ -312,6 +312,7 @@ jobs:
           KUBERNETES_PROXY_LAUNCH_SCRIPT_PATH: "/root/kube-proxy.sh"
           KUBERNETES_PROXY_SYSTEMD_NAME: "kube-proxy"
           KUBERNETES_PROXY_CONFIG_FILE: "/root/kube-proxy-conf.yaml"
+          KUBERNETES_PROXY_CERT_FILE: "/root/k8s-kube-proxy-cert.pem"
           DOWNLOADER_FILE_PATH: "/root/downloads"
           EXTRA_DATA_FILE_PATH: "/root/metal-extra-data.json"
       - name: Add agents to broker goal state

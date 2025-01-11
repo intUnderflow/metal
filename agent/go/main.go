@@ -93,6 +93,7 @@ var (
 	kubernetesProxyLaunchScriptPath = os.Getenv("KUBERNETES_PROXY_LAUNCH_SCRIPT_PATH")
 	kubernetesProxySystemdName      = os.Getenv("KUBERNETES_PROXY_SYSTEMD_NAME")
 	kubernetesProxyConfigFile       = os.Getenv("KUBERNETES_PROXY_CONFIG_FILE")
+	kubernetesProxyCertFile         = os.Getenv("KUBERNETES_PROXY_CERT_FILE")
 
 	downloaderFilePath = os.Getenv("DOWNLOADER_FILE_PATH")
 
@@ -186,6 +187,7 @@ func run() error {
 		kubernetesKubeletKubeletConfigFile,
 		kubernetesKubeletCertFile,
 		kubernetesKubeletKeyFile,
+		kubernetesProxyCertFile,
 	)
 	coreDNSService := coredns.NewCoreDNS(
 		nodeID,

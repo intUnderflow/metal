@@ -33,7 +33,7 @@ type Kubelet interface {
 	GetStatus(ctx context.Context) (*config.KubernetesKubeletStatus, error)
 	RestartService(context.Context) error
 	AddCertificateForFulfillment(string, string)
-	FulfillCertificate(string) error
+	FulfillCertificate(string, string) error
 }
 
 func NewKubelet(
@@ -46,6 +46,7 @@ func NewKubelet(
 	kubeletKubeConfigFile string,
 	kubeletCertFile string,
 	kubeletKeyFile string,
+	kubeProxyCertFile string,
 ) Kubelet {
 	return &kubeletImpl{
 		mutex:                    &sync.RWMutex{},
@@ -58,6 +59,7 @@ func NewKubelet(
 		kubeletKubeConfigFile:    kubeletKubeConfigFile,
 		kubeletCertFile:          kubeletCertFile,
 		kubeletKeyFile:           kubeletKeyFile,
+		kubeProxyCertFile:        kubeProxyCertFile,
 		currentlyAppliedSpec:     nil,
 		lastRestart:              time.Unix(0, 0),
 		sequenceNumber:           0,
@@ -77,6 +79,7 @@ type kubeletImpl struct {
 	kubeletKubeConfigFile    string
 	kubeletCertFile          string
 	kubeletKeyFile           string
+	kubeProxyCertFile        string
 	currentlyAppliedSpec     *config.KubernetesKubeletSpec
 	currentKubeconfigPath    string
 	lastRestart              time.Time
@@ -207,7 +210,11 @@ func (k *kubeletImpl) AddCertificateForFulfillment(nodeID string, certificate st
 	}
 }
 
-func (k *kubeletImpl) FulfillCertificate(certificate string) error {
+func (k *kubeletImpl) FulfillCertificate(certificate string, certificateType string) error {
+	if certificateType != "kubelet" && certificateType != "proxy" {
+		return errors.New("invalid certificate type")
+	}
+
 	k.mutex.Lock()
 	defer k.mutex.Unlock()
 
@@ -226,7 +233,11 @@ func (k *kubeletImpl) FulfillCertificate(certificate string) error {
 		Bytes: der,
 	})
 
-	err = os.WriteFile(k.kubeletCertFile, pemData, 0600)
+	path := k.kubeletCertFile
+	if certificateType == "proxy" {
+		path = k.kubeProxyCertFile
+	}
+	err = os.WriteFile(path, pemData, 0600)
 	if err != nil {
 		return err
 	}
