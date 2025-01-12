@@ -37,5 +37,5 @@ func (k *kubernetesKubeletInstallCertificate) BasicDisplayTextForHumans() string
 }
 
 func (k *kubernetesKubeletInstallCertificate) DetailedDisplayTextForHumans() string {
-	return fmt.Sprintf("Need to install certificate to node %s with content %s", k.nodeID, k.certificate)
+	return fmt.Sprintf("Need to install certificate to node %s\nkubelet: %s\nkube-proxy: %s", k.nodeID, k.kubeletCertificate, k.kubeProxyCertificate)
 }
