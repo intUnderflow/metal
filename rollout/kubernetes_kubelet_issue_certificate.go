@@ -41,7 +41,7 @@ func (k *kubernetesKubeletIssueCertificate) Apply(_ context.Context) error {
 		return err
 	}
 
-	k.kubeletService.AddCertificateForFulfillment(k.forNodeID, base64.StdEncoding.EncodeToString(kubeletCert))
+	k.kubeletService.AddCertificateForFulfillment(k.forNodeID+":kubelet", base64.StdEncoding.EncodeToString(kubeletCert))
 	k.kubeletService.AddCertificateForFulfillment(k.forNodeID+":kube-proxy", base64.StdEncoding.EncodeToString(kubeProxyCert))
 	return nil
 }

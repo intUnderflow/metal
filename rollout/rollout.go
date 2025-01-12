@@ -451,7 +451,7 @@ func (r *Service) getRolloutsForNode(config *config.Config, node *config.Node) (
 		if node.ActualState.KubernetesKubeletStatus != nil && node.ActualState.KubernetesKubeletStatus.CertificateRequest != nil {
 			publicKey := node.ActualState.KubernetesKubeletStatus.CertificateRequest.PublicKey
 			// Check if fulfilled before making the rollout
-			certificate := getCertificateFulfillmentResult(config, node.GoalState.ID)
+			certificate := getCertificateFulfillmentResult(config, node.GoalState.ID+":kubelet")
 			if publicKey != "" && certificate == "" {
 				nodeToIssue := selectControllerNode(config, node.GoalState.ID)
 				if nodeToIssue != "" {
@@ -463,7 +463,7 @@ func (r *Service) getRolloutsForNode(config *config.Config, node *config.Node) (
 						kubeletService: r.kubeletService,
 					})
 				}
-			} else if publicKey != "" && certificate != "" {
+			} else if publicKey != "" {
 				rollouts = append(rollouts, &kubernetesKubeletInstallCertificate{
 					nodeID:         node.GoalState.ID,
 					certificate:    certificate,
@@ -858,11 +858,11 @@ func verifyCertificateConformity(node string, certificate string) error {
 	return nil
 }
 
-func getCertificateFulfillmentResult(configToUse *config.Config, nodeID string) string {
+func getCertificateFulfillmentResult(configToUse *config.Config, certificateID string) string {
 	for _, node := range configToUse.Nodes {
 		if node.GoalState != nil && node.GoalState.KubernetesControlPlane {
 			if node.ActualState != nil && node.ActualState.KubernetesKubeletStatus != nil && node.ActualState.KubernetesKubeletStatus.CertificateFulfill != nil {
-				cert, ok := node.ActualState.KubernetesKubeletStatus.CertificateFulfill[nodeID]
+				cert, ok := node.ActualState.KubernetesKubeletStatus.CertificateFulfill[certificateID]
 				if ok {
 					return cert
 				}
