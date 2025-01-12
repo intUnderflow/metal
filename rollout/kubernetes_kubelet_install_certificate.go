@@ -7,9 +7,10 @@ import (
 )
 
 type kubernetesKubeletInstallCertificate struct {
-	nodeID         string
-	certificate    string
-	kubeletService kubelet.Kubelet
+	nodeID               string
+	kubeletCertificate   string
+	kubeProxyCertificate string
+	kubeletService       kubelet.Kubelet
 }
 
 func (k *kubernetesKubeletInstallCertificate) NodeID() string {
@@ -17,7 +18,11 @@ func (k *kubernetesKubeletInstallCertificate) NodeID() string {
 }
 
 func (k *kubernetesKubeletInstallCertificate) Apply(_ context.Context) error {
-	return k.kubeletService.FulfillCertificate(k.certificate, "kubelet")
+	err := k.kubeletService.FulfillCertificate(k.kubeProxyCertificate, "proxy")
+	if err != nil {
+		return err
+	}
+	return k.kubeletService.FulfillCertificate(k.kubeletCertificate, "kubelet")
 }
 
 func (k *kubernetesKubeletInstallCertificate) Priority() Priority {

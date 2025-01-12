@@ -451,8 +451,9 @@ func (r *Service) getRolloutsForNode(config *config.Config, node *config.Node) (
 		if node.ActualState.KubernetesKubeletStatus != nil && node.ActualState.KubernetesKubeletStatus.CertificateRequest != nil {
 			publicKey := node.ActualState.KubernetesKubeletStatus.CertificateRequest.PublicKey
 			// Check if fulfilled before making the rollout
-			certificate := getCertificateFulfillmentResult(config, node.GoalState.ID+":kubelet")
-			if publicKey != "" && certificate == "" {
+			kubeletCertificate := getCertificateFulfillmentResult(config, node.GoalState.ID+":kubelet")
+			kubeProxyCertificate := getCertificateFulfillmentResult(config, node.GoalState.ID+":kube-proxy")
+			if publicKey != "" && (kubeletCertificate == "" || kubeProxyCertificate == "") {
 				nodeToIssue := selectControllerNode(config, node.GoalState.ID)
 				if nodeToIssue != "" {
 					rollouts = append(rollouts, &kubernetesKubeletIssueCertificate{
@@ -465,9 +466,10 @@ func (r *Service) getRolloutsForNode(config *config.Config, node *config.Node) (
 				}
 			} else if publicKey != "" {
 				rollouts = append(rollouts, &kubernetesKubeletInstallCertificate{
-					nodeID:         node.GoalState.ID,
-					certificate:    certificate,
-					kubeletService: r.kubeletService,
+					nodeID:               node.GoalState.ID,
+					kubeletCertificate:   kubeletCertificate,
+					kubeProxyCertificate: kubeProxyCertificate,
+					kubeletService:       r.kubeletService,
 				})
 			}
 		}
