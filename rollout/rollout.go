@@ -824,8 +824,8 @@ func generateKubernetesProxySpec(configToUse *config.Config, nodeID string) (*co
 	}
 
 	return &config.KubernetesProxySpec{
-		KubeconfigPath: node.ActualState.KubernetesKubeletStatus.KubeconfigPath,
-		ClusterCIDR:    _clusterCIDR,
+		ServerAddress: fmt.Sprintf("https://%s.node.metal.local:%d", node.GoalState.ID, _kubernetesAPIServerSecurePort),
+		ClusterCIDR:   _clusterCIDR,
 	}, nil
 }
 

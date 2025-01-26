@@ -13,10 +13,11 @@ import (
 	"time"
 )
 
-var (
-	//go:embed kube-proxy.yaml
-	_kubeProxyConfig string
-)
+//go:embed kubeconfig.yaml
+var _kubeconfig string
+
+//go:embed kube-proxy.yaml
+var _kubeProxyConfig string
 
 type Proxy interface {
 	GetCurrentlyAppliedSpec() *config.KubernetesProxySpec
@@ -31,6 +32,10 @@ type proxyImpl struct {
 	launchScriptPath     string
 	serviceSystemdName   string
 	proxyConfigFile      string
+	proxyKubeConfigFile  string
+	proxyCertFile        string
+	proxyKeyFile         string
+	proxyCAFile          string
 	currentlyAppliedSpec *config.KubernetesProxySpec
 	lastRestart          time.Time
 	sequenceNumber       int
@@ -41,6 +46,10 @@ func NewProxy(
 	launchScriptPath string,
 	serviceSystemdName string,
 	proxyConfigFile string,
+	proxyKubeConfigFile string,
+	proxyCertFile string,
+	proxyKeyFile string,
+	proxyCAFile string,
 ) Proxy {
 	return &proxyImpl{
 		mutex:                &sync.RWMutex{},
@@ -48,6 +57,10 @@ func NewProxy(
 		launchScriptPath:     launchScriptPath,
 		serviceSystemdName:   serviceSystemdName,
 		proxyConfigFile:      proxyConfigFile,
+		proxyKubeConfigFile:  proxyKubeConfigFile,
+		proxyCertFile:        proxyCertFile,
+		proxyKeyFile:         proxyKeyFile,
+		proxyCAFile:          proxyCAFile,
 		currentlyAppliedSpec: nil,
 		lastRestart:          time.Unix(0, 0),
 		sequenceNumber:       0,
@@ -68,15 +81,21 @@ func (p *proxyImpl) ApplySpec(spec *config.KubernetesProxySpec) error {
 	p.sequenceNumber = p.sequenceNumber + 1
 
 	configFilePath := fmt.Sprintf("%s.%d", p.proxyConfigFile, p.sequenceNumber)
-	configFile := generateKubeProxyConfig(spec.KubeconfigPath, spec.ClusterCIDR)
+	kubeConfigFilePath := fmt.Sprintf("%s.%d", p.proxyKubeConfigFile, p.sequenceNumber)
+	kubeConfigFile := toKubeconfig(p.proxyCAFile, spec.ServerAddress, p.proxyCertFile, p.proxyKeyFile)
 
-	err := os.WriteFile(configFilePath, []byte(configFile), 0600)
+	err := os.WriteFile(kubeConfigFilePath, []byte(kubeConfigFile), 0600)
+	if err != nil {
+		return err
+	}
+
+	configFile := generateKubeProxyConfig(kubeConfigFilePath, spec.ClusterCIDR)
+	err = os.WriteFile(configFilePath, []byte(configFile), 0600)
 	if err != nil {
 		return err
 	}
 
 	launchScript := toLaunchScript(p.proxyPath, configFilePath)
-
 	err = os.WriteFile(p.launchScriptPath, []byte(launchScript), 0600)
 	if err != nil {
 		return err
@@ -123,6 +142,20 @@ func generateKubeProxyConfig(kubeConfigPath string, clusterCIDR string) string {
 	kubeproxyConfig = strings.ReplaceAll(kubeproxyConfig, "$CLUSTER_CIDR", fmt.Sprintf("\"%s\"", clusterCIDR))
 
 	return kubeproxyConfig
+}
+
+func toKubeconfig(caFile string, serverAddress string, clientCertificate string, clientKey string) string {
+	kubeconfig := _kubeconfig
+
+	kubeconfig = strings.ReplaceAll(kubeconfig, "$CA_DATA_PATH", fmt.Sprintf("\"%s\"", caFile))
+
+	kubeconfig = strings.ReplaceAll(kubeconfig, "$SERVER_ADDRESS", fmt.Sprintf("\"%s\"", serverAddress))
+
+	kubeconfig = strings.ReplaceAll(kubeconfig, "$CLIENT_CERTIFICATE_PATH", fmt.Sprintf("\"%s\"", clientCertificate))
+
+	kubeconfig = strings.ReplaceAll(kubeconfig, "$CLIENT_KEY_PATH", fmt.Sprintf("\"%s\"", clientKey))
+
+	return kubeconfig
 }
 
 func toLaunchScript(kubeProxyPath string, configPath string) string {
