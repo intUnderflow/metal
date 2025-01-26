@@ -16,6 +16,7 @@ var (
 		"kubernetes.default.svc.cluster.local",
 		"kube-proxy",
 		"kube-proxy.metal.local",
+		"node.metal.local",
 	}
 )
 
