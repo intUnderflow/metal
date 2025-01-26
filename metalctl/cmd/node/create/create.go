@@ -37,7 +37,6 @@ var coreDNSHash string
 var manifestPath string
 var mtlsCertFilePath string
 var mtlsKeyFilePath string
-var extraData string
 var customRollouts string
 
 func Cmd() *cobra.Command {
@@ -109,13 +108,6 @@ func Cmd() *cobra.Command {
 			if coreDNSHash != "" {
 				manifestContent.CoreDNS.Hash = coreDNSHash
 			}
-			extraDataMap := map[string]string{}
-			if extraData != "" {
-				err = json.Unmarshal([]byte(extraData), &extraDataMap)
-				if err != nil {
-					return err
-				}
-			}
 			customRolloutsMap := map[string]config.CustomRolloutSpec{}
 			if customRollouts != "" {
 				customRolloutsMap, err = unmarshalCustomRollouts(customRollouts)
@@ -148,7 +140,6 @@ func Cmd() *cobra.Command {
 				KubernetesProxyBinaryHash:             manifestContent.KubeProxy.Hash,
 				CoreDNSBinary:                         manifestContent.CoreDNS.URL,
 				CoreDNSBinaryHash:                     manifestContent.CoreDNS.Hash,
-				ExtraData:                             extraDataMap,
 				CustomRolloutSpec:                     customRolloutsMap,
 			}
 			signature, err := signer.Sign(nodeGoalState)
@@ -191,7 +182,6 @@ func Cmd() *cobra.Command {
 	create.PersistentFlags().StringVar(&kubeProxyHash, "kube-proxy-hash", "", "Expected sha256 hash of kube-proxy binary")
 	create.PersistentFlags().StringVar(&coreDNSURL, "core-dns-url", "", "URL of CoreDNS binary")
 	create.PersistentFlags().StringVar(&coreDNSHash, "core-dns-hash", "", "Expected sha256 hash of CoreDNS binary")
-	create.PersistentFlags().StringVar(&extraData, "extra-data", "", "Extra data for the node")
 	create.PersistentFlags().StringVar(&customRollouts, "custom-rollouts", "", "Custom rollouts")
 	create.PersistentFlags().StringVar(&manifestPath, "manifest-path", "", "Path to manifest of Kubernetes binaries and hashes")
 	create.PersistentFlags().StringVar(&mtlsCertFilePath, "mtls-cert-file-path", "", "Mutual TLS Certificate File Path")

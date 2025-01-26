@@ -8,7 +8,6 @@ import (
 	"github.com/intunderflow/metal/agent/go/actualstate/downloader"
 	"github.com/intunderflow/metal/agent/go/actualstate/endpoint"
 	"github.com/intunderflow/metal/agent/go/actualstate/etcd"
-	"github.com/intunderflow/metal/agent/go/actualstate/extradata"
 	"github.com/intunderflow/metal/agent/go/actualstate/kubernetes/apiserver"
 	controller_manager "github.com/intunderflow/metal/agent/go/actualstate/kubernetes/controller-manager"
 	"github.com/intunderflow/metal/agent/go/actualstate/kubernetes/kubelet"
@@ -41,7 +40,6 @@ func NewActualState(
 	coreDNSService coredns.CoreDNS,
 	kubernetesProxyService proxy.Proxy,
 	downloadService downloader.Downloader,
-	extraDataService extradata.ExtraData,
 	customRolloutsService customrollouts.CustomRollouts,
 ) ActualState {
 	return &actualStateImpl{
@@ -60,7 +58,6 @@ func NewActualState(
 		coreDNSService:                     coreDNSService,
 		kubernetesProxyService:             kubernetesProxyService,
 		downloadService:                    downloadService,
-		extraDataService:                   extraDataService,
 		customRolloutsService:              customRolloutsService,
 	}
 }
@@ -81,7 +78,6 @@ type actualStateImpl struct {
 	coreDNSService                     coredns.CoreDNS
 	kubernetesProxyService             proxy.Proxy
 	downloadService                    downloader.Downloader
-	extraDataService                   extradata.ExtraData
 	customRolloutsService              customrollouts.CustomRollouts
 }
 
@@ -136,7 +132,6 @@ func (a *actualStateImpl) GetActualState(ctx context.Context) (*config.NodeActua
 		KubernetesProxySpec:                        a.kubernetesProxyService.GetCurrentlyAppliedSpec(),
 		KubernetesProxyStatus:                      deriveServiceHealth(a.kubernetesProxyService.CheckHealthy(ctx)),
 		DownloadedBinaries:                         a.downloadService.GetBinariesActualState(),
-		ExtraData:                                  a.extraDataService.GetExtraData(),
 		CustomRolloutState:                         a.customRolloutsService.GetActualState(ctx),
 	}, nil
 }

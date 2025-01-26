@@ -10,7 +10,6 @@ import (
 	"github.com/intunderflow/metal/agent/go/actualstate/downloader"
 	"github.com/intunderflow/metal/agent/go/actualstate/endpoint"
 	"github.com/intunderflow/metal/agent/go/actualstate/etcd"
-	"github.com/intunderflow/metal/agent/go/actualstate/extradata"
 	"github.com/intunderflow/metal/agent/go/actualstate/kubernetes/apiserver"
 	controller_manager "github.com/intunderflow/metal/agent/go/actualstate/kubernetes/controller-manager"
 	"github.com/intunderflow/metal/agent/go/actualstate/kubernetes/kubelet"
@@ -97,8 +96,6 @@ var (
 	kubernetesProxyKubeConfigFile   = os.Getenv("KUBERNETES_PROXY_KUBECONFIG_FILE")
 
 	downloaderFilePath = os.Getenv("DOWNLOADER_FILE_PATH")
-
-	extraDataFilePath = os.Getenv("EXTRA_DATA_FILE_PATH")
 
 	// Used to store the CA bundle for Kubernetes from all nodes
 	kubernetesCAFile = os.Getenv("KUBERNETES_CA_FILE_PATH")
@@ -213,10 +210,9 @@ func run() error {
 		kubernetesCAFile,
 	)
 	downloadService := downloader.NewDownloader(downloaderFilePath)
-	extraDataService := extradata.NewExtraData(extraDataFilePath)
 	customRolloutsService := customrollouts.NewCustomRollouts()
-	actualState := actualstate.NewActualState(nodeID, endpointGetter, wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService, downloadService, extraDataService, customRolloutsService)
-	rolloutService := rollout.NewService(wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService, downloadService, extraDataService, customRolloutsService)
+	actualState := actualstate.NewActualState(nodeID, endpointGetter, wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService, downloadService, customRolloutsService)
+	rolloutService := rollout.NewService(wireguardService, etcdService, kubernetesApiServerService, kubernetesControllerManagerService, kubernetesSchedulerService, dnsService, pkiService, kubeletService, coreDNSService, kubeProxyService, downloadService, customRolloutsService)
 
 	requestTerminate := &atomic.Bool{}
 	terminateChannel := make(chan os.Signal, 1)

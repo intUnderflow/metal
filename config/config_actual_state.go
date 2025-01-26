@@ -82,9 +82,6 @@ type NodeActualState struct {
 	// if a binary needs to be updated
 	DownloadedBinaries map[string]string `json:"downloaded_binaries"`
 
-	// ExtraData is the ExtraData from the goal state that has been written to disk
-	ExtraData map[string]string `json:"extra_data"`
-
 	// CustomRolloutState contains state from custom rollouts
 	CustomRolloutState map[string]string `json:"custom_rollout_state"`
 }

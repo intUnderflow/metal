@@ -13,7 +13,6 @@ import (
 	"github.com/intunderflow/metal/agent/go/actualstate/dns"
 	"github.com/intunderflow/metal/agent/go/actualstate/downloader"
 	"github.com/intunderflow/metal/agent/go/actualstate/etcd"
-	"github.com/intunderflow/metal/agent/go/actualstate/extradata"
 	"github.com/intunderflow/metal/agent/go/actualstate/kubernetes/apiserver"
 	controller_manager "github.com/intunderflow/metal/agent/go/actualstate/kubernetes/controller-manager"
 	"github.com/intunderflow/metal/agent/go/actualstate/kubernetes/kubelet"
@@ -57,7 +56,7 @@ type Priority struct {
 	Minor int
 }
 
-func NewService(wireguardService wireguard.Wireguard, etcdService etcd.Etcd, kubernetesAPIServerService apiserver.ApiServer, kubernetesControllerManagerService controller_manager.ControllerManager, kubernetesSchedulerService scheduler.Scheduler, dnsService dns.DNS, pkiService pki.PKI, kubeletService kubelet.Kubelet, coreDNSService coredns.CoreDNS, kubernetesProxyService proxy.Proxy, downloadService downloader.Downloader, extraDataService extradata.ExtraData, customRolloutService customrollouts.CustomRollouts) *Service {
+func NewService(wireguardService wireguard.Wireguard, etcdService etcd.Etcd, kubernetesAPIServerService apiserver.ApiServer, kubernetesControllerManagerService controller_manager.ControllerManager, kubernetesSchedulerService scheduler.Scheduler, dnsService dns.DNS, pkiService pki.PKI, kubeletService kubelet.Kubelet, coreDNSService coredns.CoreDNS, kubernetesProxyService proxy.Proxy, downloadService downloader.Downloader, customRolloutService customrollouts.CustomRollouts) *Service {
 	return &Service{
 		wireguardService:                   wireguardService,
 		etcdService:                        etcdService,
@@ -70,7 +69,6 @@ func NewService(wireguardService wireguard.Wireguard, etcdService etcd.Etcd, kub
 		coreDNSService:                     coreDNSService,
 		kubernetesProxyService:             kubernetesProxyService,
 		downloadService:                    downloadService,
-		extraDataService:                   extraDataService,
 		customRolloutService:               customRolloutService,
 	}
 }
@@ -87,7 +85,6 @@ type Service struct {
 	coreDNSService                     coredns.CoreDNS
 	kubernetesProxyService             proxy.Proxy
 	downloadService                    downloader.Downloader
-	extraDataService                   extradata.ExtraData
 	customRolloutService               customrollouts.CustomRollouts
 }
 
@@ -152,14 +149,6 @@ func (r *Service) getRolloutsForNode(config *config.Config, node *config.Node) (
 	}
 	if len(customRollouts) > 0 {
 		rollouts = append(rollouts, customRollouts...)
-	}
-
-	if !mapsEqual(node.GoalState.ExtraData, node.ActualState.ExtraData) {
-		rollouts = append(rollouts, &extraDataApply{
-			nodeID:           node.GoalState.ID,
-			extraData:        node.GoalState.ExtraData,
-			extraDataService: r.extraDataService,
-		})
 	}
 
 	if node.GoalState.CoreDNSBinary != "" && !hasBinary(node.ActualState.DownloadedBinaries, "coredns", node.GoalState.CoreDNSBinaryHash) {
