@@ -94,7 +94,6 @@ var (
 	kubernetesProxySystemdName      = os.Getenv("KUBERNETES_PROXY_SYSTEMD_NAME")
 	kubernetesProxyConfigFile       = os.Getenv("KUBERNETES_PROXY_CONFIG_FILE")
 	kubernetesProxyCertFile         = os.Getenv("KUBERNETES_PROXY_CERT_FILE")
-	kubernetesProxyKeyFile          = os.Getenv("KUBERNETES_PROXY_KEY_FILE")
 	kubernetesProxyKubeConfigFile   = os.Getenv("KUBERNETES_PROXY_KUBECONFIG_FILE")
 
 	downloaderFilePath = os.Getenv("DOWNLOADER_FILE_PATH")
@@ -210,7 +209,7 @@ func run() error {
 		kubernetesProxyConfigFile,
 		kubernetesProxyKubeConfigFile,
 		kubernetesProxyCertFile,
-		kubernetesProxyKeyFile,
+		kubernetesKubeletKeyFile,
 		kubernetesCAFile,
 	)
 	downloadService := downloader.NewDownloader(downloaderFilePath)

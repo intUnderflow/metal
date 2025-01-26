@@ -313,7 +313,6 @@ jobs:
           KUBERNETES_PROXY_SYSTEMD_NAME: "kube-proxy"
           KUBERNETES_PROXY_CONFIG_FILE: "/root/kube-proxy-conf.yaml"
           KUBERNETES_PROXY_CERT_FILE: "/root/kube-proxy-cert.pem"
-          KUBERNETES_PROXY_KEY_FILE: "/root/kube-proxy-cert.key"
           KUBERNETES_PROXY_KUBECONFIG_FILE: "/root/kube-proxy.kubeconfig"
           DOWNLOADER_FILE_PATH: "/root/downloads"
           EXTRA_DATA_FILE_PATH: "/root/metal-extra-data.json"
