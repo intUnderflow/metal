@@ -398,7 +398,7 @@ func (p *pkiImpl) IssueKubeProxyCertificate(nodeName string, publicKey crypto.Pu
 			},
 		},
 		DNSNames: []string{
-			fmt.Sprintf("%s.node.metal.local", nodeName),
+			fmt.Sprintf("%s.kube-proxy.metal.local", nodeName),
 		},
 		NotBefore:   time.Now(),
 		NotAfter:    time.Now().AddDate(10, 0, 0),
