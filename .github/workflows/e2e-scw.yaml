@@ -222,7 +222,7 @@ jobs:
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/coredns.service root@$SERVER_ADDR:/root/coredns.service
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kube-proxy.service root@$SERVER_ADDR:/root/kube-proxy.service
             ssh root@$SERVER_ADDR 'sysctl -w net.ipv4.ip_forward=1'
-            ssh root@$SERVER_ADDR 'apt update && apt install wireguard -y'
+            ssh root@$SERVER_ADDR 'apt update && apt install wireguard -y && apt install nftables -y'
             ssh root@$SERVER_ADDR 'wg genkey > /root/wireguard-key-e2e.txt'
             ssh root@$SERVER_ADDR 'wg pubkey < /root/wireguard-key-e2e.txt > /root/wireguard-key-e2e.txt.public'
             ssh root@$SERVER_ADDR 'chmod +x /root/metal-agent'
