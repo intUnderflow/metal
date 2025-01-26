@@ -95,7 +95,7 @@ func (p *proxyImpl) ApplySpec(spec *config.KubernetesProxySpec) error {
 		return err
 	}
 
-	launchScript := toLaunchScript(p.proxyPath, configFilePath)
+	launchScript := toLaunchScript(p.proxyPath, spec.Name+".node.metal.local", configFilePath)
 	err = os.WriteFile(p.launchScriptPath, []byte(launchScript), 0600)
 	if err != nil {
 		return err
@@ -158,6 +158,6 @@ func toKubeconfig(caFile string, serverAddress string, clientCertificate string,
 	return kubeconfig
 }
 
-func toLaunchScript(kubeProxyPath string, configPath string) string {
-	return fmt.Sprintf("%s --config=%s", kubeProxyPath, configPath)
+func toLaunchScript(kubeProxyPath string, hostname string, configPath string) string {
+	return fmt.Sprintf("%s --hostname-override=\"%s\" --config=%s", kubeProxyPath, hostname, configPath)
 }
