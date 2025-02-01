@@ -301,7 +301,7 @@ jobs:
           KUBERNETES_SCHEDULER_KUBECONFIG_FILE: "/root/kube-scheduler.kubeconfig"
           KUBERNETES_SCHEDULER_CERT_FILE: "/root/k8s-scheduler-cert.pem"
           KUBERNETES_SCHEDULER_KEY_FILE: "/root/k8s-scheduler-cert.key"
-          KUBERNETES_KUBELET_PATH: "/usr/bin/kubelet"
+          KUBERNETES_KUBELET_PATH: "/root/downloads/kubelet"
           KUBERNETES_KUBELET_LAUNCH_SCRIPT_PATH: "/root/kubelet.sh"
           KUBERNETES_KUBELET_SYSTEMD_NAME: "kubelet"
           KUBERNETES_KUBELET_CA_FILE: "/root/k8s-kubelet-ca.pem"
