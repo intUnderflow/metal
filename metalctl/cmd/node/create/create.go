@@ -20,6 +20,7 @@ var wireguardMeshMember bool
 var etcdMember bool
 var kubernetesControlPlane bool
 var kubernetesWorker bool
+var kubernetesProvisionMethod string
 var etcdURL string
 var etcdHash string
 var kubeAPIServerURL string
@@ -126,6 +127,7 @@ func Cmd() *cobra.Command {
 				EtcdMember:                            etcdMember,
 				KubernetesControlPlane:                kubernetesControlPlane,
 				KubernetesWorker:                      kubernetesWorker,
+				KubernetesProvisionMethod:             kubernetesProvisionMethod,
 				EtcdBinary:                            manifestContent.Etcd.URL,
 				EtcdBinaryHash:                        manifestContent.Etcd.Hash,
 				KubernetesAPIServerBinary:             manifestContent.KubeAPIServer.URL,
@@ -168,6 +170,7 @@ func Cmd() *cobra.Command {
 	create.PersistentFlags().BoolVar(&etcdMember, "etcd-member", false, "Give node etcd membership")
 	create.PersistentFlags().BoolVar(&kubernetesControlPlane, "kubernetes-control-plane", false, "Give node kubernetes control plane membership")
 	create.PersistentFlags().BoolVar(&kubernetesWorker, "kubernetes-worker", false, "Give node kubernetes worker status")
+	create.PersistentFlags().StringVar(&kubernetesProvisionMethod, "kubernetes-provision-method", "metal", "Kubernetes provisioning method")
 	create.PersistentFlags().StringVar(&etcdURL, "etcd-url", "", "Etcd server URL")
 	create.PersistentFlags().StringVar(&etcdHash, "etcd-hash", "", "Etcd server hash")
 	create.PersistentFlags().StringVar(&kubeAPIServerURL, "kube-apiserver-url", "", "URL of kube-apiserver binary to download")

@@ -24,6 +24,9 @@ type NodeGoalState struct {
 	// If this boolean is true then the node will be a Kubernetes worker
 	KubernetesWorker bool `json:"kubernetes_worker"`
 
+	// Controls the provisioning method, valid values are metal or kubeadm.
+	KubernetesProvisionMethod string `json:"kubernetes_provision_method"`
+
 	// The URL of the etcd binary to use (maps to etcd)
 	EtcdBinary string `json:"etcd_binary"`
 

@@ -319,7 +319,7 @@ jobs:
         run: |
           write_goal_state(){
             local agent_id=$1
-            /tmp/metalctl node create e2e-$agent_id --broker "$BROKER" --cert-file admin.pem --key-file admin.key --wireguard-mesh-member --etcd-member --kubernetes-control-plane --kubernetes-worker --mtls-cert-file-path admin.pem --mtls-key-file-path admin.key --manifest-path ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/manifest.json --custom-rollouts '{"test":{"goal_state":"foobar\n","apply_command":["/bin/bash","-c","echo foobar > /tmp/metal-custom-rollout.txt"], "get_actual_state_command":["/bin/bash","-c","touch /tmp/metal-custom-rollout.txt && cat /tmp/metal-custom-rollout.txt"], "priority": {"major": 200, "minor": 0}, "basic_display_text_for_humans": "Test foobar"}}'
+            /tmp/metalctl node create e2e-$agent_id --broker "$BROKER" --cert-file admin.pem --key-file admin.key --wireguard-mesh-member --etcd-member --kubernetes-control-plane --kubernetes-worker --kubernetes-provision-method metal --mtls-cert-file-path admin.pem --mtls-key-file-path admin.key --manifest-path ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/manifest.json --custom-rollouts '{"test":{"goal_state":"foobar\n","apply_command":["/bin/bash","-c","echo foobar > /tmp/metal-custom-rollout.txt"], "get_actual_state_command":["/bin/bash","-c","touch /tmp/metal-custom-rollout.txt && cat /tmp/metal-custom-rollout.txt"], "priority": {"major": 200, "minor": 0}, "basic_display_text_for_humans": "Test foobar"}}'
           }
           for i in {1..3}; do
             write_goal_state $i

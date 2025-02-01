@@ -262,6 +262,20 @@ func (r *Service) getRolloutsForNode(config *config.Config, node *config.Node) (
 		}
 	}
 
+	if node.GoalState.KubernetesProvisionMethod == "metal" {
+		metalRollouts, err := r.getRolloutsForNodeMetalProvisioning(config, node)
+		if err != nil {
+			return nil, err
+		}
+		rollouts = append(rollouts, metalRollouts...)
+	}
+
+	return rollouts, nil
+}
+
+func (r *Service) getRolloutsForNodeMetalProvisioning(config *config.Config, node *config.Node) ([]Rollout, error) {
+	var rollouts []Rollout
+
 	if node.GoalState.EtcdMember {
 		if node.ActualState.EtcdStatus != "HEALTHY" {
 			rollouts = append(rollouts, &etcdWaitUntilHealthy{
