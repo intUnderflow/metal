@@ -223,7 +223,7 @@ jobs:
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kube-controller-manager.service root@$SERVER_ADDR:/root/kube-controller-manager.service
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kube-scheduler.service root@$SERVER_ADDR:/root/kube-scheduler.service    
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kubeadm/kubelet.service root@$SERVER_ADDR:/root/kubelet.service   
-            scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kubeadm/10-kubeadm.service root@$SERVER_ADDR:/root/10-kubeadm.service    
+            scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kubeadm/10-kubeadm.conf root@$SERVER_ADDR:/root/10-kubeadm.conf    
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/coredns.service root@$SERVER_ADDR:/root/coredns.service
             scp ${GITHUB_WORKSPACE}/e2e/scaleway/artifacts/kube-proxy.service root@$SERVER_ADDR:/root/kube-proxy.service
             ssh root@$SERVER_ADDR 'sysctl -w net.ipv4.ip_forward=1'
