@@ -221,6 +221,16 @@ func (r *Service) getRolloutsForNode(config *config.Config, node *config.Node) (
 		})
 	}
 
+	if node.GoalState.KubeadmBinary != "" && !hasBinary(node.ActualState.DownloadedBinaries, "kubeadm", node.GoalState.KubeadmBinaryHash) {
+		rollouts = append(rollouts, &downloadBinary{
+			nodeID:          node.GoalState.ID,
+			key:             "kubeadm",
+			url:             node.GoalState.KubeadmBinary,
+			expectedHash:    node.GoalState.KubeadmBinaryHash,
+			downloadService: r.downloadService,
+		})
+	}
+
 	if node.GoalState.WireguardMeshMember {
 		if node.ActualState.WireguardStatus != "HEALTHY" {
 			rollouts = append(rollouts, &wireguardWaitUntilHealthy{

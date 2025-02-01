@@ -35,6 +35,8 @@ var kubeProxyURL string
 var kubeProxyHash string
 var coreDNSURL string
 var coreDNSHash string
+var kubeadmURL string
+var kubeadmHash string
 var manifestPath string
 var mtlsCertFilePath string
 var mtlsKeyFilePath string
@@ -109,6 +111,12 @@ func Cmd() *cobra.Command {
 			if coreDNSHash != "" {
 				manifestContent.CoreDNS.Hash = coreDNSHash
 			}
+			if kubeadmURL != "" {
+				manifestContent.Kubeadm.URL = kubeadmURL
+			}
+			if kubeadmHash != "" {
+				manifestContent.Kubeadm.Hash = kubeadmHash
+			}
 			customRolloutsMap := map[string]config.CustomRolloutSpec{}
 			if customRollouts != "" {
 				customRolloutsMap, err = unmarshalCustomRollouts(customRollouts)
@@ -142,6 +150,8 @@ func Cmd() *cobra.Command {
 				KubernetesProxyBinaryHash:             manifestContent.KubeProxy.Hash,
 				CoreDNSBinary:                         manifestContent.CoreDNS.URL,
 				CoreDNSBinaryHash:                     manifestContent.CoreDNS.Hash,
+				KubeadmBinary:                         kubeadmURL,
+				KubeadmBinaryHash:                     kubeadmHash,
 				CustomRolloutSpec:                     customRolloutsMap,
 			}
 			signature, err := signer.Sign(nodeGoalState)

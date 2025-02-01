@@ -69,6 +69,12 @@ type NodeGoalState struct {
 	// The hash of the content expected at the URL of the CoreDNS binary (if empty no hash check is done)
 	CoreDNSBinaryHash string `json:"coredns_binary_hash"`
 
+	// The url of the Kubeadm binary to use (maps to kubeadm)
+	KubeadmBinary string `json:"kubeadm_binary"`
+
+	// The hash of the content expected at the URL of the Kubeadm binary (if empty no hash check is done)
+	KubeadmBinaryHash string `json:"kubeadm_binary_hash"`
+
 	// CustomRolloutSpec is the custom rollouts configured for the node
 	CustomRolloutSpec map[string]CustomRolloutSpec `json:"custom_rollout_spec"`
 }

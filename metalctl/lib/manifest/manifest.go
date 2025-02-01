@@ -13,6 +13,7 @@ type Manifest struct {
 	Kubelet               Entry `json:"kubelet"`
 	KubeProxy             Entry `json:"kube-proxy"`
 	CoreDNS               Entry `json:"coredns"`
+	Kubeadm               Entry `json:"kubeadm"`
 }
 
 type Entry struct {
