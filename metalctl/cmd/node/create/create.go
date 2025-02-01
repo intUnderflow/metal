@@ -150,8 +150,8 @@ func Cmd() *cobra.Command {
 				KubernetesProxyBinaryHash:             manifestContent.KubeProxy.Hash,
 				CoreDNSBinary:                         manifestContent.CoreDNS.URL,
 				CoreDNSBinaryHash:                     manifestContent.CoreDNS.Hash,
-				KubeadmBinary:                         kubeadmURL,
-				KubeadmBinaryHash:                     kubeadmHash,
+				KubeadmBinary:                         manifestContent.Kubeadm.URL,
+				KubeadmBinaryHash:                     manifestContent.Kubeadm.Hash,
 				CustomRolloutSpec:                     customRolloutsMap,
 			}
 			signature, err := signer.Sign(nodeGoalState)
@@ -195,6 +195,8 @@ func Cmd() *cobra.Command {
 	create.PersistentFlags().StringVar(&kubeProxyHash, "kube-proxy-hash", "", "Expected sha256 hash of kube-proxy binary")
 	create.PersistentFlags().StringVar(&coreDNSURL, "core-dns-url", "", "URL of CoreDNS binary")
 	create.PersistentFlags().StringVar(&coreDNSHash, "core-dns-hash", "", "Expected sha256 hash of CoreDNS binary")
+	create.PersistentFlags().StringVar(&kubeadmURL, "kubeadm-url", "", "URL of Kubeadm binary")
+	create.PersistentFlags().StringVar(&kubeadmHash, "kubeadm-hash", "", "Expected sha256 hash of Kubeadm binary")
 	create.PersistentFlags().StringVar(&customRollouts, "custom-rollouts", "", "Custom rollouts")
 	create.PersistentFlags().StringVar(&manifestPath, "manifest-path", "", "Path to manifest of Kubernetes binaries and hashes")
 	create.PersistentFlags().StringVar(&mtlsCertFilePath, "mtls-cert-file-path", "", "Mutual TLS Certificate File Path")
