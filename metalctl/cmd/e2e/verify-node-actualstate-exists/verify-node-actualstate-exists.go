@@ -55,8 +55,8 @@ func Cmd() *cobra.Command {
 	verifyNodeActualstateExists.PersistentFlags().StringVar(&broker, "broker", "", "Broker server URL")
 	verifyNodeActualstateExists.PersistentFlags().IntVar(&attempts, "attempts", 1, "Maximum attempts")
 	verifyNodeActualstateExists.PersistentFlags().IntVar(&delay, "delay", 5, "Delay between attempts")
-	verifyNodeActualstateExists.PersistentFlags().StringVar(&mtlsCertFilePath, "mtls-cert-file-path", "", "Mutual TLS Certificate File Path")
-	verifyNodeActualstateExists.PersistentFlags().StringVar(&mtlsKeyFilePath, "mtls-key-file-path", "", "Mutual TLS Key File Path")
+	verifyNodeActualstateExists.PersistentFlags().StringVar(&mtlsCertFilePath, "mtls-cert-file-path", "~/.metal/admin.pem", "Mutual TLS Certificate File Path")
+	verifyNodeActualstateExists.PersistentFlags().StringVar(&mtlsKeyFilePath, "mtls-key-file-path", "~/.metal/admin.key", "Mutual TLS Key File Path")
 	return verifyNodeActualstateExists
 }
 

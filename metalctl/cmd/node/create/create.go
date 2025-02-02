@@ -199,8 +199,8 @@ func Cmd() *cobra.Command {
 	create.PersistentFlags().StringVar(&kubeadmHash, "kubeadm-hash", "", "Expected sha256 hash of Kubeadm binary")
 	create.PersistentFlags().StringVar(&customRollouts, "custom-rollouts", "", "Custom rollouts")
 	create.PersistentFlags().StringVar(&manifestPath, "manifest-path", "", "Path to manifest of Kubernetes binaries and hashes")
-	create.PersistentFlags().StringVar(&mtlsCertFilePath, "mtls-cert-file-path", "", "Mutual TLS Certificate File Path")
-	create.PersistentFlags().StringVar(&mtlsKeyFilePath, "mtls-key-file-path", "", "Mutual TLS Key File Path")
+	create.PersistentFlags().StringVar(&mtlsCertFilePath, "mtls-cert-file-path", "~/.metal/admin.pem", "Mutual TLS Certificate File Path")
+	create.PersistentFlags().StringVar(&mtlsKeyFilePath, "mtls-key-file-path", "~/.metal/admin.key", "Mutual TLS Key File Path")
 	return create
 }
 

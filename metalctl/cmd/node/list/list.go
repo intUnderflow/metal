@@ -74,8 +74,8 @@ func Cmd() *cobra.Command {
 		},
 	}
 	list.PersistentFlags().StringVar(&broker, "broker", "", "Broker server URL")
-	list.PersistentFlags().StringVar(&mtlsCertFilePath, "mtls-cert-file-path", "", "Mutual TLS Certificate File Path")
-	list.PersistentFlags().StringVar(&mtlsKeyFilePath, "mtls-key-file-path", "", "Mutual TLS Key File Path")
+	list.PersistentFlags().StringVar(&mtlsCertFilePath, "mtls-cert-file-path", "~/.metal/admin.pem", "Mutual TLS Certificate File Path")
+	list.PersistentFlags().StringVar(&mtlsKeyFilePath, "mtls-key-file-path", "~/.metal/admin.key", "Mutual TLS Key File Path")
 	list.PersistentFlags().BoolVar(&hideGoalState, "hide-goal-state", false, "Hide Goal State")
 	list.PersistentFlags().BoolVar(&hideActualState, "hide-actual-state", false, "Hide Actual State")
 	list.PersistentFlags().BoolVar(&hideReconciliationStatus, "hide-reconciliation-status", false, "Hide Reconciliation Status")

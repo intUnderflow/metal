@@ -52,7 +52,7 @@ func Cmd() *cobra.Command {
 	list.PersistentFlags().StringVar(&broker, "broker", "", "Broker server URL")
 	list.PersistentFlags().BoolVar(&detailed, "detailed", false, "Show detailed rollout information")
 	list.PersistentFlags().BoolVar(&detailedFirstRollout, "detailed-first-rollout", false, "Show detailed rollout information for the first rollout")
-	list.PersistentFlags().StringVar(&mtlsCertFilePath, "mtls-cert-file-path", "", "Mutual TLS Certificate File Path")
-	list.PersistentFlags().StringVar(&mtlsKeyFilePath, "mtls-key-file-path", "", "Mutual TLS Key File Path")
+	list.PersistentFlags().StringVar(&mtlsCertFilePath, "mtls-cert-file-path", "~/.metal/admin.pem", "Mutual TLS Certificate File Path")
+	list.PersistentFlags().StringVar(&mtlsKeyFilePath, "mtls-key-file-path", "~/.metal/admin.key", "Mutual TLS Key File Path")
 	return list
 }
