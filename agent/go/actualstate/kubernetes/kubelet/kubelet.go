@@ -341,9 +341,14 @@ func generateKeyPair(filePath string) (*rsa.PublicKey, error) {
 		return nil, err
 	}
 
+	keyBytes, err := x509.MarshalPKCS8PrivateKey(kubeletPrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
 	pemData := pem.EncodeToMemory(&pem.Block{
 		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(kubeletPrivateKey),
+		Bytes: keyBytes,
 	})
 	err = os.WriteFile(filePath, pemData, 0600)
 	if err != nil {
