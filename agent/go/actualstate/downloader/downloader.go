@@ -54,6 +54,10 @@ func (d *downloaderImpl) DownloadBinary(key string, url string, expectedHash str
 		// If no error here the content already exists, no need to download anything
 		err = os.Symlink(path, symlinkPath)
 		if err != nil {
+			if os.IsExist(err) {
+				d.binaries[key] = expectedHash
+				return nil
+			}
 			return err
 		}
 		d.binaries[key] = expectedHash
