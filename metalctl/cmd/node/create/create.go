@@ -174,8 +174,8 @@ func Cmd() *cobra.Command {
 		},
 	}
 	create.PersistentFlags().StringVar(&broker, "broker", "", "Broker server URL")
-	create.PersistentFlags().StringVar(&certFile, "cert-file", "", "Certificate file")
-	create.PersistentFlags().StringVar(&keyFile, "key-file", "", "Key file")
+	create.PersistentFlags().StringVar(&certFile, "cert-file", "~/.metal/admin.pem", "Certificate file")
+	create.PersistentFlags().StringVar(&keyFile, "key-file", "~/.metal/admin.key", "Key file")
 	create.PersistentFlags().BoolVar(&wireguardMeshMember, "wireguard-mesh-member", false, "Give node wireguard membership")
 	create.PersistentFlags().BoolVar(&etcdMember, "etcd-member", false, "Give node etcd membership")
 	create.PersistentFlags().BoolVar(&kubernetesControlPlane, "kubernetes-control-plane", false, "Give node kubernetes control plane membership")
